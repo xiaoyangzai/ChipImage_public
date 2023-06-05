@@ -1,0 +1,33 @@
+name: CMake
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    runs-on: windows-latest
+    env:
+      OPENCV_VERSION: 4.5.3
+      OPENCV_CONTRIB_VERSION: 4.5.3
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install CMake
+        uses: cmake/setup-cmake@v1
+
+      - name: Install OpenCV dependencies
+        uses: opencv/actions@v1
+
+      - name: Configure CMake
+        run: cmake -G "Visual Studio 17 2022" -DCMAKE_BUILD_TYPE=Release -DOpenCV_DIR=${{ env.OPENCV_ROOT }}/x64/vc16/lib/cmake/opencv4 -B build ..
+
+      - name: Build
+        run: cmake --build build --config Release
