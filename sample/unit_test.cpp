@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 #include <fstream>
 #include <vector>
 #include <sstream>
@@ -103,6 +104,13 @@ void test_base64_image_matcher(std::string image, std::string target)
     int loc_x = -1;
     int loc_y = -1;
     auto quality = MatchTarget(&encodedImg[0], encodedImg.size(), &encodedTarget[0], encodedTarget.size(), loc_x, loc_y);
+    cv::rectangle(img, cv::Point(loc_x, loc_y), cv::Point(loc_x + targetMat.cols, loc_y + targetMat.rows), cv::Scalar(0, 255, 255), 2);
+    std::ostringstream text;
+    text << "Quality: " << static_cast<int>(quality) << " X: " << loc_x << " Y: " << loc_y;
+    cv::putText(img, text.str(), cv::Point(50, 50), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
+
+    cv::imshow("Target Image", img);
+    cv::waitKey(0);
     std::cout << "Quality: " << quality << "\tlocation: " << loc_x << "x" << loc_y << std::endl;
 }
 
