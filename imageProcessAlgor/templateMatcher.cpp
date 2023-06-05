@@ -18,11 +18,11 @@ extern "C"
 		loc_x = -1;
 		loc_y = -1;
 		std::string imageData = Base64Decoder(image, imageSize);
-		vector<uchar> decodedImage(imageData.begin(), imageData.end());
+		std::vector<uchar> decodedImage(imageData.begin(), imageData.end());
 		cv::Mat imageMat = imdecode(decodedImage, cv::IMREAD_COLOR);
 		sprintf_s(msg, sizeof(msg) - strlen(msg), "Image size: %d x %d\n", imageMat.rows, imageMat.cols);
 		std::string targetData = Base64Decoder(target, targetSize);
-		vector<uchar> decodedTarget(targetData.begin(), targetData.end());
+		std::vector<uchar> decodedTarget(targetData.begin(), targetData.end());
 		cv::Mat targetMat = imdecode(decodedTarget, cv::IMREAD_COLOR);
 		sprintf_s(msg, sizeof(msg) - strlen(msg), "Target size: %d x %d\n", targetMat.rows, targetMat.cols);
 
