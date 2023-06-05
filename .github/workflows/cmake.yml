@@ -1,0 +1,45 @@
+name: CMake
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        
+      - name: Install curl and 7-Zip
+        run: |
+          choco install curl
+          choco install 7zip
+          
+      - name: Install CMake
+        run: |
+          curl -L -O https://github.com/Kitware/CMake/releases/download/v3.21.3/cmake-3.21.3-windows-x86_64.zip
+          7z x cmake-3.21.3-windows-x86_64.zip -oc:\cmake
+          echo "##vso[task.prependpath]c:\cmake\bin"
+
+      - name: Install OpenCV dependencies
+        run: |
+          curl -L -O https://github.com/opencv/opencv/archive/4.5.4.zip
+          7z x 4.5.4.zip -oC:\opencv
+          cd C:\opencv\opencv-4.5.4\
+          mkdir build && cd build
+          cmake -G "Visual Studio 17 2022" -DCMAKE_BUILD_TYPE=Release ..
+          cmake --build . --config Release
+
+      - name: Configure CMake
+        run: cmake -G "Visual Studio 17 2022" -DCMAKE_BUILD_TYPE=Release -DOpenCV_DIR=C:/opencv/opencv-4.5.4/build/install/x64/vc16/lib/cmake/opencv4 -B build ..
+
+      - name: Build
+        run: cmake --build build --config Release
+
