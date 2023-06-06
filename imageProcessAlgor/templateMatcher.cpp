@@ -14,30 +14,31 @@ extern "C"
 	{
 		int quality = -1;
 		char msg[256] = "";
-		sprintf_s(msg + strlen(msg), sizeof(msg) - strlen(msg), "Calling MatchTarget()....\n");
+		sprintf_s(msg, sizeof(msg) - strlen(msg), "Image length: %d\nTarget length: %d\n", imageSize, targetSize);
 		loc_x = -1;
 		loc_y = -1;
 		std::string imageData = Base64Decoder(image, imageSize);
 		std::vector<uchar> decodedImage(imageData.begin(), imageData.end());
 		cv::Mat imageMat = imdecode(decodedImage, cv::IMREAD_COLOR);
-
+		sprintf_s(msg, sizeof(msg) - strlen(msg), "Image size: %d x %d\n", imageMat.rows, imageMat.cols);
 		std::string targetData = Base64Decoder(target, targetSize);
-		vector<uchar> decodedTarget(targetData.begin(), targetData.end());
+		std::vector<uchar> decodedTarget(targetData.begin(), targetData.end());
 		cv::Mat targetMat = imdecode(decodedTarget, cv::IMREAD_COLOR);
+		sprintf_s(msg, sizeof(msg) - strlen(msg), "Target size: %d x %d\n", targetMat.rows, targetMat.cols);
 
-		if (!imageMat.data || !targetMat.data)
-		{
-			sprintf_s(msg + strlen(msg), sizeof(msg) - strlen(msg), "Error: Failed to load image data.\n");
-			DebugPrint(msg);
-			return -1;
-		}
-		// TODO: implement the image matcher here
+		cv::Mat imageGray, targetGray;
+		cv::cvtColor(imageMat, imageGray, cv::COLOR_BGR2GRAY);
+		cv::cvtColor(targetMat, targetGray, cv::COLOR_BGR2GRAY);
+		cv::Mat result;
+		cv::matchTemplate(imageGray, targetGray, result, cv::TM_CCOEFF_NORMED);
 
-		loc_x = imageMat.rows / 2;
-		loc_y = imageMat.cols / 2;
-		quality = 90;
-		sprintf_s(msg + strlen(msg), sizeof(msg) - strlen(msg), "Quality: %d\t Location: %d x %d\n", quality, loc_x, loc_y);
-		sprintf_s(msg + strlen(msg), sizeof(msg) - strlen(msg), "Calling MatchTarget()....Done\n");
+		double minVal, maxVal;
+		cv::Point minLoc, maxLoc;
+		cv::minMaxLoc(result, &minVal, &maxVal, &minLoc, &maxLoc, cv::Mat());
+		loc_x = maxLoc.x;
+		loc_y = maxLoc.y;
+		quality = static_cast<int>(maxVal * 100);
+		sprintf_s(msg, sizeof(msg) - strlen(msg), "Matched Position: %d x %d\nQuality: %d\n", loc_x, loc_y, quality);
 		DebugPrint(msg);
 		return quality;
 	}
