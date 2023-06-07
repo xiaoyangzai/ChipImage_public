@@ -19,4 +19,4 @@ project ("ImageProcessModule")
 
 # Include sub-projects.
 add_subdirectory ("imageProcessAlgor")
-add_subdirectory ("sample")
+add_subdirectory ("samples")
