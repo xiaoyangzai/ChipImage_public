@@ -32,34 +32,45 @@ for contour in contours:
     if area > max_area:
         max_area = area
         max_contour = contour
-
+contours = [max_contour]
 # 从上半部分寻找第一条线
 half_height = img.shape[0] //2
-max_y_point = None 
+max_top_y_point = None 
+mix_bottom_y_point = None 
 # 找到contour中Y坐标值大于0小于图像高度一半范围内的Y值最小的点
-points = []
+points_top = []
+points_bottom = []
 for contour in contours:
     for point in contour:
         y = point[0][1]
         if y > 0 and y < half_height:
             if point[0][0] < 10 or point[0][0] >= img.shape[1] - 10:
                 continue
-            points.append(point[0])
+            points_top.append(point[0])
+        else:
+            if point[0][0] < 10 or point[0][0] >= img.shape[1] - 10:
+                continue
+            points_bottom.append(point[0])
 
-if len(points) > 0:
-    max_y_point = max(points, key=lambda p: p[1])
+if len(points_top) > 0:
+    max_top_y_point = max(points_top, key=lambda p: p[1])
+else:
+    print('没有符合条件的点')
+
+if len(points_bottom) > 0:
+    mix_bottom_y_point = min(points_bottom, key=lambda p: p[1])
 else:
     print('没有符合条件的点')
 
 top_y = None
-for y in range(max_y_point[1], half_height):
+for y in range(max_top_y_point[1], half_height):
     if np.sum(max_contour[y]) > 0:
         top_y = y
         break
 
 # 从下半部分寻找第二条线
 bottom_y = None
-for y in range(half_height, img.shape[0]):
+for y in range(half_height, mix_bottom_y_point[1]):
     if np.sum(max_contour[y]) > 0:
         bottom_y = y
     else:
