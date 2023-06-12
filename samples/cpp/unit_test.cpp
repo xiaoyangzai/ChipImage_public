@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
         test_base64_image_matcher("image.jpg", "target.jpg");
         break;
     case 4:
-        test_base64_image_rotate_transform("image.jpg");
+        test_base64_image_rotate_transform("rotate_test.jpg");
         break;
     case 5:
         test_image_pixel_size_measure("image.jpg");
@@ -117,6 +117,11 @@ void test_base64_image_matcher(std::string image, std::string target)
 void test_base64_image_rotate_transform(std::string image)
 {
     Mat img = imread(image);
+    if (!img.data)
+    {
+        std::cout << "Failed to load image " << image << "\nError: " << strerror(errno) << std::endl;
+        return;
+    }
     vector<uchar> data;
     imencode(".jpg", img, data);
     string encodedImg = Base64Encoder(reinterpret_cast<char *>(data.data()), data.size());
