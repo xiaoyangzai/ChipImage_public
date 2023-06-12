@@ -128,6 +128,13 @@ void test_base64_image_rotate_transform(std::string image)
     double angle = 0.0;
     int ret = RotateTransform(&encodedImg[0], encodedImg.size(), angle);
     std::cout << "Angle: " << angle << std::endl;
+    cv::Mat rotate_img;
+    cv::Point2f center((1.0 * img.cols) / 2.0, (1.0 * img.rows) / 2.0);
+    cv::Mat rotation_matrix = cv::getRotationMatrix2D(center, angle, 1.0);
+    cv::warpAffine(img, rotate_img, rotation_matrix, img.size());
+    cv::imshow("soure Image", img);
+    cv::imshow("rotated Image", rotate_img);
+    cv::waitKey(0);
 }
 
 void test_image_pixel_size_measure(std::string image)
