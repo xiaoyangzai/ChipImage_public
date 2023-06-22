@@ -4,13 +4,16 @@
 #include <stdio.h>
 #include "cutImageAlgr.h"
 #include "rotateTransform.h"
+#define MEM_MAX_SIZE 1024*1024*15 
 
 using namespace std;
 using namespace cv;
 
+static char *g_dynamicMem = NULL;
+
 extern "C"
 {
-    __declspec(dllexport) int RotateTransform(char *image, int imageSize, double &rotate_angle)
+    __declspec(dllexport) int RotateTransform(char *image, int imageSize, double &rotate_angle, char **outputImage)
     {
         char msg[256] = "";
         sprintf_s(msg + strlen(msg), sizeof(msg) - strlen(msg), "Calling RotateTransform()....\n");
@@ -57,7 +60,7 @@ extern "C"
         double x0 = a * max_length, y0 = b * max_length;
         Point pt1(cvRound(x0 + 1000 * (-b)), cvRound(y0 + 1000 * (a)));
         Point pt2(cvRound(x0 - 1000 * (-b)), cvRound(y0 - 1000 * (a)));
-        line(srcImage, pt1, pt2, Scalar(0, 255, 255), 2, LINE_AA);
+        line(srcImage, pt1, pt2, Scalar(0, 255, 255), 20, LINE_AA);
         if (rotate_angle > 45)
         {
             rotate_angle = -90 + rotate_angle;
@@ -66,8 +69,38 @@ extern "C"
         {
             rotate_angle = 90 + rotate_angle;
         }
-
         sprintf_s(msg + strlen(msg), sizeof(msg) - strlen(msg), "Rotate rotate_angle: %.2f\n", rotate_angle);
+
+        // Draw the square in the center of the image
+        int centerX = srcImage.cols / 2;
+        int centerY = srcImage.rows / 2;
+        int size = 100;
+        int halfSize = size / 2;
+        cv::rectangle(srcImage, Point(centerX - halfSize, centerY - halfSize),
+                  Point(centerX + halfSize, centerY + halfSize), Scalar(0, 255, 0), 5);
+        line(srcImage, Point(centerX - halfSize, centerY), Point(centerX + halfSize, centerY), Scalar(0, 255, 0), 5);
+        line(srcImage, Point(centerX, centerY - halfSize), Point(centerX, centerY + halfSize), Scalar(0, 255, 0), 5);
+
+        // Encoded output image with Base64
+        std::vector<uchar> buffer;
+        std::vector<int> params = {cv::IMWRITE_JPEG_QUALITY, 100};
+        cv::imencode(".jpg", srcImage, buffer, params);
+        char* ptr = reinterpret_cast<char*>(buffer.data());
+        std::string outputImageDate = Base64Encoder(ptr, buffer.size());
+        if (!g_dynamicMem) {
+            g_dynamicMem = (char*)malloc(MEM_MAX_SIZE * sizeof(char));
+        }
+        if (outputImageDate.size() >= MEM_MAX_SIZE) {
+            sprintf_s(msg + strlen(msg), sizeof(msg) - strlen(msg), "[ERROR] Destation image buffer is not large enough. Maximum buffer size is %d and Current dumped image size is %d.\n", MEM_MAX_SIZE, outputImageDate.size());
+            return -1;
+        }
+
+        // Save the output image into global memory with 15MB space
+        strcpy(g_dynamicMem, outputImageDate.c_str());
+        if (outputImage) {
+            *outputImage = g_dynamicMem;
+        }
+
         sprintf_s(msg + strlen(msg), sizeof(msg) - strlen(msg), "Calling RotateTransform()....Done\n");
         DebugPrint(msg);
         return 0;

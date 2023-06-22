@@ -101,17 +101,23 @@ void test_base64_image_matcher(std::string image, std::string target)
     Mat targetMat = imread(target);
     imencode(".jpg", targetMat, data);
     string encodedTarget = Base64Encoder(reinterpret_cast<char *>(data.data()), data.size());
-    int loc_x = -1;
-    int loc_y = -1;
-    auto quality = MatchTarget(&encodedImg[0], encodedImg.size(), &encodedTarget[0], encodedTarget.size(), loc_x, loc_y);
-    cv::rectangle(img, cv::Point(loc_x, loc_y), cv::Point(loc_x + targetMat.cols, loc_y + targetMat.rows), cv::Scalar(0, 255, 255), 2);
+    int original_x = 600;
+    int original_y = 500;
+    int matched_x = 0;
+    int matched_y = 0;
+    auto quality = MatchTarget(&encodedImg[0], encodedImg.size(), &encodedTarget[0], encodedTarget.size(), original_x, original_y, matched_x, matched_y, NULL);
+    if (quality < 0) {
+        std::cout << "Error happened during searhing the template image.\n";
+        return;
+    }
+    cv::rectangle(img, cv::Point(matched_x, matched_y), cv::Point(matched_x+ targetMat.cols, matched_y + targetMat.rows), cv::Scalar(0, 255, 0), 2);
     std::ostringstream text;
-    text << "Quality: " << static_cast<int>(quality) << " X: " << loc_x << " Y: " << loc_y;
-    cv::putText(img, text.str(), cv::Point(50, 50), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
+    text << "Quality: " << quality << " X: " << matched_x - original_x << " Y: " << matched_y - original_y;
+    cv::putText(img, text.str(), cv::Point(50, 50), cv::FONT_HERSHEY_SIMPLEX, 2, cv::Scalar(0, 255, 0), 5);
 
     cv::imshow("Target Image", img);
     cv::waitKey(0);
-    std::cout << "Quality: " << quality << "\tlocation: " << loc_x << "x" << loc_y << std::endl;
+    std::cout << "Quality: " << quality << " X: " << matched_x - original_x << " Y: " << matched_y - original_y;
 }
 
 void test_base64_image_rotate_transform(std::string image)
@@ -126,7 +132,7 @@ void test_base64_image_rotate_transform(std::string image)
     imencode(".jpg", img, data);
     string encodedImg = Base64Encoder(reinterpret_cast<char *>(data.data()), data.size());
     double angle = 0.0;
-    int ret = RotateTransform(&encodedImg[0], encodedImg.size(), angle);
+    int ret = RotateTransform(&encodedImg[0], encodedImg.size(), angle, NULL);
     std::cout << "Angle: " << angle << std::endl;
     cv::Mat rotate_img;
     cv::Point2f center((1.0 * img.cols) / 2.0, (1.0 * img.rows) / 2.0);
