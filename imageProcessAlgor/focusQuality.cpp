@@ -42,7 +42,13 @@ extern "C"
     __declspec(dllexport) int FocusQuality(cv::Mat& image) {
         int quality = -1;
         //TODO: calculate the image quality based with the current focus setting
-        quality = 78;
+        cv::Mat gradient_x, gradient_y;
+        cv::Sobel(image, gradient_x, CV_64F, 1, 0, 3);
+        cv::Sobel(image, gradient_y, CV_64F, 0, 1, 3);
+        cv::Mat gradient_magnitude = cv::Mat(image.size(), CV_64F);
+        cv::sqrt(gradient_x.mul(gradient_x) + gradient_y.mul(gradient_y), gradient_magnitude);
+        double score = cv::mean(gradient_magnitude.mul(gradient_magnitude))[0];
+        quality = std::ceil(score);
         std::string ret = "Image focus quality: " + std::to_string(quality);
 		DebugPrint(ret.c_str());
         return quality;
