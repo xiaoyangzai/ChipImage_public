@@ -41,7 +41,10 @@ extern "C"
 	}
     __declspec(dllexport) int FocusQuality(cv::Mat& image) {
         int quality = -1;
+        //TODO: calculate the image quality based with the current focus setting
         quality = 78;
+        std::string ret = "Image focus quality: " + std::to_string(quality);
+		DebugPrint(ret.c_str());
         return quality;
     }
 }
