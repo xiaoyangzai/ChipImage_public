@@ -39,6 +39,7 @@ extern "C"
         free(g_dynamicMem);
 		return 0;
 	}
+
     __declspec(dllexport) int BrightQuality(cv::Mat& image) {
         int quality = -1;
         //TODO: calculate the image quality based with the current focus setting
@@ -47,25 +48,48 @@ extern "C"
 		DebugPrint(ret.c_str());
         return quality;
     }
-    int StatBrightnessMean(cv::Mat& image) {
-        int quality = -1;
+
+    float StatBrightnessMean(cv::Mat& image) {
+        float quality = -1;
         //TODO: calculate the image quality based on Mean
+        if (img.channels() == 3)
+            cv::cvtColor(img, img, cv::COLOR_BGR2GRAY);
+            img.convertTo(img, CV_64F);
+        quality = cv::mean(img)[0];
         return quality;
     }
-    int StatBrightnessRMS(cv::Mat& image) {
-        int quality = -1;
+
+    float StatBrightnessRMS(cv::Mat& image) {
+        float quality = -1;
         //TODO: calculate the image quality based on RMS 
+        if (img.channels() == 3)
+        cv::cvtColor(img, img, cv::COLOR_BGR2GRAY);
+        img.convertTo(img, CV_64F);
+        cv::multiply(img, img, img);
+        quality = std::sqrt(cv::mean(img)[0]);
         return quality;
     }
-    int StatBrightnessFormula(cv::Mat& image) {
+
+    float StatBrightnessFormula(cv::Mat& image) {
         int quality = -1;
         //TODO: calculate the image quality based on Formula 
+        if (img.channels() == 1)
+        cv::cvtColor(img, img, cv::COLOR_GRAY2BGR);
+        img.convertTo(img, CV_64F);
+        cv::Scalar rgb = cv::mean(img);
+        quality = std::sqrt((0.241 * rgb[2]*rgb[2] + 0.691 * rgb[1]*rgb[1] + 0.068 * rgb[0]*rgb[0]));
         return quality;
     }
-    int StatBrightnessRMSFormula(cv::Mat& image) {
+
+    float StatBrightnessRMSFormula(cv::Mat& image) {
         int quality = -1;
         //TODO: calculate the image quality based on RMS Formula 
+        if (img.channels() == 1)
+        cv::cvtColor(img, img, cv::COLOR_GRAY2BGR);
+        img.convertTo(img, CV_64F);
+        cv::multiply(img, img, img);
+        cv::Scalar rms = cv::mean(img);
+        quality = std::sqrt((0.241 * rms[2] + 0.691 * rms[1] + 0.068 * rms[0]));
         return quality;
-
     }
 }
