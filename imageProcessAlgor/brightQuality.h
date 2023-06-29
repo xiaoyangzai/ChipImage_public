@@ -18,7 +18,7 @@ extern "C"
                                         int maxBright,
                                         int step,
                                         CaptureImage captureImage);
-    __declspec(dllexport) int BrightQuality(cv::Mat& image);
+    __declspec(dllexport) float BrightQuality(cv::Mat& image);
     float StatBrightnessMean(cv::Mat& image); 
     float StatBrightnessRMS(cv::Mat& image); 
     float StatBrightnessFormula(cv::Mat& image); 

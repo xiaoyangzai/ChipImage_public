@@ -13,7 +13,7 @@ extern "C"
 {
 
     __declspec(dllexport) int AutoBright(int minBright, int maxBright, int step, CaptureImage captureImage) {
-		int quality = -1;
+		float quality = -1;
 		char msg[256] = "";
 		sprintf_s(msg, sizeof(msg) - strlen(msg), "AutoBright:\nMax: %d, Min: %d, Step: %d\n", minBright, maxBright, step);
         if (captureImage == NULL) {
@@ -40,10 +40,10 @@ extern "C"
 		return 0;
 	}
 
-    __declspec(dllexport) int BrightQuality(cv::Mat& image) {
-        int quality = -1;
+    __declspec(dllexport) float BrightQuality(cv::Mat& image) {
+        float quality = -1;
         //TODO: calculate the image quality based with the current focus setting
-
+        quality = StatBrightnessRMS(image);
         std::string ret = "Image focus quality: " + std::to_string(quality);
 		DebugPrint(ret.c_str());
         return quality;
