@@ -71,7 +71,7 @@ extern "C"
     }
 
     float StatBrightnessFormula(cv::Mat& image) {
-        int quality = -1;
+        float quality = -1;
         //TODO: calculate the image quality based on Formula 
         if (img.channels() == 1)
         cv::cvtColor(img, img, cv::COLOR_GRAY2BGR);
@@ -82,7 +82,7 @@ extern "C"
     }
 
     float StatBrightnessRMSFormula(cv::Mat& image) {
-        int quality = -1;
+        float quality = -1;
         //TODO: calculate the image quality based on RMS Formula 
         if (img.channels() == 1)
         cv::cvtColor(img, img, cv::COLOR_GRAY2BGR);
