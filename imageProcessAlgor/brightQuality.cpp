@@ -12,10 +12,10 @@ static char *g_dynamicMem = NULL;
 extern "C"
 {
 
-    __declspec(dllexport) int AutoFocus(int min_focus, int max_focus, int step, CaptureImage captureImage) {
+    __declspec(dllexport) int AutoBright(int minBright, int maxBright, int step, CaptureImage captureImage) {
 		int quality = -1;
 		char msg[256] = "";
-		sprintf_s(msg, sizeof(msg) - strlen(msg), "AutoFocus:\nMax: %d, Min: %d, Step: %d\n", min_focus, max_focus, step);
+		sprintf_s(msg, sizeof(msg) - strlen(msg), "AutoBright:\nMax: %d, Min: %d, Step: %d\n", minBright, maxBright, step);
         if (captureImage == NULL) {
 		    sprintf_s(msg, sizeof(msg) - strlen(msg), "Empty image capture handler. Please check again!\n");
 		    DebugPrint(msg);
@@ -34,51 +34,38 @@ extern "C"
 		std::vector<uchar> decodedImage(imageData.begin(), imageData.end());
 		cv::Mat imageMat = imdecode(decodedImage, cv::IMREAD_COLOR);
         quality = FocusQuality(imageMat);
-		sprintf_s(msg, sizeof(msg) - strlen(msg), "[AutoFocus] Received data length: %d\nQuality: %d\n",length, quality);
+		sprintf_s(msg, sizeof(msg) - strlen(msg), "[AutoBright] Received data length: %d\nQuality: %d\n",length, quality);
 		DebugPrint(msg);
         free(g_dynamicMem);
 		return 0;
 	}
-    __declspec(dllexport) int FocusQuality(cv::Mat& image) {
+    __declspec(dllexport) int BrightQuality(cv::Mat& image) {
         int quality = -1;
         //TODO: calculate the image quality based with the current focus setting
-        quality = StatSharpnessGradient(image);
+
         std::string ret = "Image focus quality: " + std::to_string(quality);
 		DebugPrint(ret.c_str());
         return quality;
     }
-
-    int StatSharpnessGradient(cv::Mat& image) {
+    int StatBrightnessMean(cv::Mat& image) {
         int quality = -1;
-        //TODO: calculate the image quality based on gradient 
-        cv::Mat gradient_x, gradient_y;
-        cv::Sobel(image, gradient_x, CV_64F, 1, 0, 3);
-        cv::Sobel(image, gradient_y, CV_64F, 0, 1, 3);
-        cv::Mat gradient_magnitude = cv::Mat(image.size(), CV_64F);
-        cv::sqrt(gradient_x.mul(gradient_x) + gradient_y.mul(gradient_y), gradient_magnitude);
-        double score = cv::mean(gradient_magnitude.mul(gradient_magnitude))[0];
-        quality = (int)score;
+        //TODO: calculate the image quality based on Mean
         return quality;
     }
-
-    int StatSharpnessTenengrad(cv::Mat& image) {
+    int StatBrightnessRMS(cv::Mat& image) {
         int quality = -1;
-        //TODO: calculate the image quality based on Tenengrad 
-        return quality;
-
-    }
-
-    int StatSharpnessLaplacian(cv::Mat& image) {
-        int quality = -1;
-        //TODO: calculate the image quality based on Laplacian
-
+        //TODO: calculate the image quality based on RMS 
         return quality;
     }
-
-    int StatSharpnessVariance(cv::Mat& img) {
+    int StatBrightnessFormula(cv::Mat& image) {
         int quality = -1;
-        //TODO: calculate the image quality based on Variance
-
+        //TODO: calculate the image quality based on Formula 
         return quality;
+    }
+    int StatBrightnessRMSFormula(cv::Mat& image) {
+        int quality = -1;
+        //TODO: calculate the image quality based on RMS Formula 
+        return quality;
+
     }
 }

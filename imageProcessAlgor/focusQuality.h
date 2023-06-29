@@ -19,4 +19,8 @@ extern "C"
                                         int step,
                                         CaptureImage captureImage);
     __declspec(dllexport) int FocusQuality(cv::Mat& image);
+    int StatSharpnessGradient(cv::Mat& image);
+    int StatSharpnessTenengrad(cv::Mat& image);
+    int Stat_sharpness_Laplacian(cv::Mat& image);
+    int StatSharpnessVariance(cv::Mat& img);
 }
