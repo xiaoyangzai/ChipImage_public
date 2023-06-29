@@ -20,7 +20,7 @@ extern "C"
                                         CaptureImage captureImage);
     __declspec(dllexport) float BrightQuality(cv::Mat& image);
     float StatBrightnessMean(cv::Mat& image); 
-    float StatBrightnessRMS(cv::Mat& image); 
+    float StatBrightnessRMS(cv::Mat& img);
     float StatBrightnessFormula(cv::Mat& image); 
     float StatBrightnessRMSFormula(cv::Mat& image); 
 }

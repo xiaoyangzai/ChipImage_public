@@ -40,7 +40,7 @@ extern "C"
 		return 0;
 	}
     __declspec(dllexport) float FocusQuality(cv::Mat& image) {
-        float quality = -1;
+        float quality = -1.0;
         //TODO: calculate the image quality based with the current focus setting
         quality = StatSharpnessTenengrad(image);
         std::string ret = "Image focus quality: " + std::to_string(quality);
@@ -48,21 +48,20 @@ extern "C"
         return quality;
     }
 
-    // int StatSharpnessGradient(cv::Mat& image) {
-    //     int quality = -1;
-    //     //TODO: calculate the image quality based on gradient 
-    //     cv::Mat gradient_x, gradient_y;
-    //     cv::Sobel(image, gradient_x, CV_64F, 1, 0, 3);
-    //     cv::Sobel(image, gradient_y, CV_64F, 0, 1, 3);
-    //     cv::Mat gradient_magnitude = cv::Mat(image.size(), CV_64F);
-    //     cv::sqrt(gradient_x.mul(gradient_x) + gradient_y.mul(gradient_y), gradient_magnitude);
-    //     double score = cv::mean(gradient_magnitude.mul(gradient_magnitude))[0];
-    //     quality = (int)score;
-    //     return quality;
-    // }
+    float StatSharpnessGradient(cv::Mat& image) {
+        float quality = -1.0;
+        //TODO: calculate the image quality based on gradient 
+        cv::Mat gradient_x, gradient_y;
+        cv::Sobel(image, gradient_x, CV_64F, 1, 0, 3);
+        cv::Sobel(image, gradient_y, CV_64F, 0, 1, 3);
+        cv::Mat gradient_magnitude = cv::Mat(image.size(), CV_64F);
+        cv::sqrt(gradient_x.mul(gradient_x) + gradient_y.mul(gradient_y), gradient_magnitude);
+        quality = cv::mean(gradient_magnitude.mul(gradient_magnitude))[0];
+        return quality;
+    }
 
-    float StatSharpnessTenengrad(cv::Mat& image, const int threshold=500) {
-        int quality = -1;
+    float StatSharpnessTenengrad(cv::Mat& img, const int threshold) {
+        float quality = -1.0;
         //TODO: calculate the image quality based on Tenengrad 
         if (img.channels() == 3)
         cv::cvtColor(img, img, cv::COLOR_BGR2GRAY);
@@ -77,8 +76,8 @@ extern "C"
         return quality;
     }
 
-    int StatSharpnessLaplacian(cv::Mat& image) {
-        float quality = -1;
+    float StatSharpnessLaplacian(cv::Mat& img) {
+        float quality = -1.0;
         //TODO: calculate the image quality based on Laplacian
         if (img.channels() == 3)
         cv::cvtColor(img, img, cv::COLOR_BGR2GRAY);
@@ -90,8 +89,8 @@ extern "C"
         return quality;
     }
 
-    int StatSharpnessVariance(cv::Mat& img) {
-        float quality = -1;
+    float StatSharpnessVariance(cv::Mat& img) {
+        float quality = -1.0;
         //TODO: calculate the image quality based on Variance
         if (img.channels() == 3)
         cv::cvtColor(img, img, cv::COLOR_BGR2GRAY);

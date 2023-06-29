@@ -19,8 +19,8 @@ extern "C"
                                         int step,
                                         CaptureImage captureImage);
     __declspec(dllexport) float FocusQuality(cv::Mat& image);
-    // float StatSharpnessGradient(cv::Mat& image);
-    float StatSharpnessTenengrad(cv::Mat& image, int threshold);
+    float StatSharpnessGradient(cv::Mat& image);
+    float StatSharpnessTenengrad(cv::Mat& image, const int threshold = 500);
     float Stat_sharpness_Laplacian(cv::Mat& image);
     float StatSharpnessVariance(cv::Mat& img);
 }

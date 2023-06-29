@@ -4,7 +4,7 @@
 #include <iostream>
 #include <stdio.h>
 #include "cutImageAlgr.h"
-#include "focusQuality.h"
+#include "brightQuality.h"
 using namespace cv;
 using namespace std;
 #define MEM_MAX_SIZE 1024*1024*15 
@@ -33,7 +33,7 @@ extern "C"
 		std::string imageData = Base64Decoder(g_dynamicMem, length);
 		std::vector<uchar> decodedImage(imageData.begin(), imageData.end());
 		cv::Mat imageMat = imdecode(decodedImage, cv::IMREAD_COLOR);
-        quality = FocusQuality(imageMat);
+        quality = BrightQuality(imageMat);
 		sprintf_s(msg, sizeof(msg) - strlen(msg), "[AutoBright] Received data length: %d\nQuality: %d\n",length, quality);
 		DebugPrint(msg);
         free(g_dynamicMem);
@@ -41,7 +41,7 @@ extern "C"
 	}
 
     __declspec(dllexport) float BrightQuality(cv::Mat& image) {
-        float quality = -1;
+        float quality = -1.0;
         //TODO: calculate the image quality based with the current focus setting
         quality = StatBrightnessRMS(image);
         std::string ret = "Image focus quality: " + std::to_string(quality);
@@ -49,8 +49,8 @@ extern "C"
         return quality;
     }
 
-    float StatBrightnessMean(cv::Mat& image) {
-        float quality = -1;
+    float StatBrightnessMean(cv::Mat& img) {
+        float quality = -1.0;
         //TODO: calculate the image quality based on Mean
         if (img.channels() == 3)
             cv::cvtColor(img, img, cv::COLOR_BGR2GRAY);
@@ -59,8 +59,8 @@ extern "C"
         return quality;
     }
 
-    float StatBrightnessRMS(cv::Mat& image) {
-        float quality = -1;
+    float StatBrightnessRMS(cv::Mat& img) {
+        float quality = -1.0;
         //TODO: calculate the image quality based on RMS 
         if (img.channels() == 3)
         cv::cvtColor(img, img, cv::COLOR_BGR2GRAY);
@@ -70,8 +70,8 @@ extern "C"
         return quality;
     }
 
-    float StatBrightnessFormula(cv::Mat& image) {
-        float quality = -1;
+    float StatBrightnessFormula(cv::Mat& img) {
+        float quality = -1.0;
         //TODO: calculate the image quality based on Formula 
         if (img.channels() == 1)
         cv::cvtColor(img, img, cv::COLOR_GRAY2BGR);
@@ -81,8 +81,8 @@ extern "C"
         return quality;
     }
 
-    float StatBrightnessRMSFormula(cv::Mat& image) {
-        float quality = -1;
+    float StatBrightnessRMSFormula(cv::Mat& img) {
+        float quality = -1.0;
         //TODO: calculate the image quality based on RMS Formula 
         if (img.channels() == 1)
         cv::cvtColor(img, img, cv::COLOR_GRAY2BGR);
