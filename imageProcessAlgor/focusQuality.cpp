@@ -13,7 +13,7 @@ extern "C"
 {
 
     __declspec(dllexport) int AutoFocus(int min_focus, int max_focus, int step, CaptureImage captureImage) {
-		float quality = -1;
+		float quality = -1.0;
 		char msg[256] = "";
 		sprintf_s(msg, sizeof(msg) - strlen(msg), "AutoFocus:\nMax: %d, Min: %d, Step: %d\n", min_focus, max_focus, step);
         if (captureImage == NULL) {
@@ -34,7 +34,7 @@ extern "C"
 		std::vector<uchar> decodedImage(imageData.begin(), imageData.end());
 		cv::Mat imageMat = imdecode(decodedImage, cv::IMREAD_COLOR);
         quality = FocusQuality(imageMat);
-		sprintf_s(msg, sizeof(msg) - strlen(msg), "[AutoFocus] Received data length: %d\nQuality: %d\n",length, quality);
+		sprintf_s(msg, sizeof(msg) - strlen(msg), "[AutoFocus] Received data length: %d\nQuality: %.3f\n",length, quality);
 		DebugPrint(msg);
         free(g_dynamicMem);
 		return 0;

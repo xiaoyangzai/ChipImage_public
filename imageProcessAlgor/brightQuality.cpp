@@ -13,7 +13,7 @@ extern "C"
 {
 
     __declspec(dllexport) int AutoBright(int minBright, int maxBright, int step, CaptureImage captureImage) {
-		float quality = -1;
+		float quality = -1.0;
 		char msg[256] = "";
 		sprintf_s(msg, sizeof(msg) - strlen(msg), "AutoBright:\nMax: %d, Min: %d, Step: %d\n", minBright, maxBright, step);
         if (captureImage == NULL) {
@@ -34,7 +34,7 @@ extern "C"
 		std::vector<uchar> decodedImage(imageData.begin(), imageData.end());
 		cv::Mat imageMat = imdecode(decodedImage, cv::IMREAD_COLOR);
         quality = BrightQuality(imageMat);
-		sprintf_s(msg, sizeof(msg) - strlen(msg), "[AutoBright] Received data length: %d\nQuality: %d\n",length, quality);
+		sprintf_s(msg, sizeof(msg) - strlen(msg), "[AutoBright] Received data length: %d\nQuality: %.3f\n",length, quality);
 		DebugPrint(msg);
         free(g_dynamicMem);
 		return 0;
