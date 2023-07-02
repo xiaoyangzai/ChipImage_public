@@ -11,6 +11,16 @@ extern "C"
         BRIGHTNESS
     };
     typedef int (*CaptureImage)(char *, int &, int);
+
+    /**
+     * @brief Search target from source image and return the location of the matched target image.
+     * @param image 		source image data buffer encoded with Base64
+     * @param imageSize		buffer size
+     * @param type          focus quality or brightness quality. Default value is focus quality.
+     * @return matched quality if successful. otherwise return non zero if failed.
+     */
+    __declspec(dllexport) float ImageQuality(char *image, int imageSize, QualityType type = QualityType::FOCUS);
+
     /**
      * @brief calculate the quality on specified focus value
      * @param minPosition               the minimum value of focus/brightness

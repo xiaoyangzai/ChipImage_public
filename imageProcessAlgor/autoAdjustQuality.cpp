@@ -14,6 +14,28 @@ static char *g_dynamicMem = NULL;
 extern "C"
 {
 
+    __declspec(dllexport) float ImageQuality(char *image, int imageSize, QualityType type)
+    {
+        char msg[256] = "";
+        sprintf_s(msg + strlen(msg), sizeof(msg) - strlen(msg), "Calling ImageQuality()....\n");
+        float quality = -1.0;
+        std::string imageData = Base64Decoder(image, imageSize);
+        std::vector<uchar> decodedImage(imageData.begin(), imageData.end());
+        cv::Mat srcImage = imdecode(decodedImage, cv::IMREAD_COLOR);
+        if (!srcImage.data)
+        {
+            sprintf_s(msg + strlen(msg), sizeof(msg) - strlen(msg), "Error: Failed to load image data.\n");
+            DebugPrint(msg);
+            return -1;
+        }
+        if (type == QualityType::FOCUS)
+            quality = FocusQuality(srcImage);
+        if (type == QualityType::BRIGHTNESS)
+            quality = BrightQuality(srcImage);
+
+        sprintf_s(msg, sizeof(msg) - strlen(msg), "Quality: %.3f\n", quality);
+        return quality;
+    }
     __declspec(dllexport) int AutoAdjust(int minPosition, int maxPosition, int startPosition, CaptureImage captureImage, QualityType type)
     {
         float quality = -1.0;
