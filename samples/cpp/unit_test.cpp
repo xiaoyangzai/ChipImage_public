@@ -10,8 +10,7 @@
 #include <pixelSizeMeter.h>
 #include <cutBaseLineDetection.h>
 #include <cutTraceDetection.h>
-#include <focusQuality.h>
-#include <brightQuality.h>
+#include <autoAdjustQuality.h>
 using namespace std;
 using namespace cv;
 
@@ -66,7 +65,7 @@ int main(int argc, char *argv[])
         test_cut_trace_validation("image.jpg");
         break;
     case 8:
-        test_focus_quality_validation("image.jpg");
+        test_focus_quality_validation("focus_good.jpg");
         break;
     case 9:
         test_bright_quality_validation("image.jpg");
@@ -194,11 +193,13 @@ void test_cut_trace_validation(std::string image)
 }
 void test_focus_quality_validation(std::string image) {
     Mat img = imread(image);
-    int quality = FocusQuality(img);
+    float quality = FocusQuality(img);
+    std::cout << "Focus Quality: " << quality << std::endl;
     return;
 }
 void test_bright_quality_validation(std::string image) {
     Mat img = imread(image);
-    int quality = BrightQuality(img);
+    float quality = BrightQuality(img);
+    std::cout << "Brightness Quality: " << quality << std::endl;
     return;
 }
