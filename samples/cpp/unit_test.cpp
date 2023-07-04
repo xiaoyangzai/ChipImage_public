@@ -143,7 +143,7 @@ void test_base64_image_rotate_transform(std::string image)
     imencode(".jpg", img, data);
     string encodedImg = Base64Encoder(reinterpret_cast<char *>(data.data()), data.size());
     double angle = 0.0;
-    int ret = RotateTransform(&encodedImg[0], encodedImg.size(), angle, NULL);
+    int ret = RotateTransform(&encodedImg[0], encodedImg.size(), angle);
     std::cout << "Angle: " << angle << std::endl;
     cv::Mat rotate_img;
     cv::Point2f center((1.0 * img.cols) / 2.0, (1.0 * img.rows) / 2.0);

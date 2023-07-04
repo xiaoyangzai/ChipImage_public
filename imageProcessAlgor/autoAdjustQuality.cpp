@@ -102,8 +102,8 @@ extern "C"
     {
         float quality = -1.0;
         // TODO: calculate the image quality based with the current focus setting
-        quality = StatBrightnessRMS(image);
-        std::string ret = "Image focus quality: " + std::to_string(quality);
+        quality = 255 - abs(StatBrightnessRMS(image) - 150);
+        std::string ret = "Image nrightness quality: " + std::to_string(quality);
         DebugPrint(ret.c_str());
         return quality;
     }
