@@ -36,7 +36,7 @@ extern "C"
         sprintf_s(msg, sizeof(msg) - strlen(msg), "Quality: %.3f\n", quality);
         return quality;
     }
-    __declspec(dllexport) int AutoAdjust(int minPosition, int maxPosition, int startPosition, CaptureImage captureImage, QualityType type)
+    __declspec(dllexport) int AutoAdjust(int minPosition, int maxPosition, int startPosition, int step, CaptureImage captureImage, QualityType type)
     {
         float quality = -1.0;
         char msg[256] = "";
@@ -58,7 +58,7 @@ extern "C"
         sprintf_s(msg, sizeof(msg) - strlen(msg), "[AutoAdjust] Max: %d, Min: %d, Step: %d\n", minPosition, maxPosition);
 
         auto startSearch = std::chrono::high_resolution_clock::now();
-        optimumPosition = BisectionSearch(minPosition, maxPosition, captureImage, type);
+        optimumPosition = BisectionSearch(minPosition, maxPosition, step, captureImage, type);
         auto endSearch = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endSearch - startSearch).count();
         quality = QueryQuality(optimumPosition, captureImage, type);
@@ -66,7 +66,8 @@ extern "C"
         sprintf_s(msg, sizeof(msg) - strlen(msg), "[AutoAdjust] Duration of searching optimum focus: %lld ms\n\tOptimum position: %d\n\tQuality: %.3f\n", duration, optimumPosition, quality);
         DebugPrint(msg);
         free(g_dynamicMem);
-        return 0;
+        g_dynamicMem = NULL;
+        return optimumPosition;
     }
 
     __declspec(dllexport) float QueryQuality(int position, CaptureImage captureImage, QualityType type)
@@ -103,20 +104,27 @@ extern "C"
         float quality = -1.0;
         // TODO: calculate the image quality based with the current focus setting
         quality = 255 - abs(StatBrightnessRMS(image) - 150);
-        std::string ret = "Image nrightness quality: " + std::to_string(quality);
+        std::string ret = "Image brightness quality: " + std::to_string(quality);
         DebugPrint(ret.c_str());
         return quality;
     }
 
-    int BisectionSearch(int start, int end, CaptureImage captureImage, QualityType type)
+    int BisectionSearch(int start, int end, int user_step, CaptureImage captureImage, QualityType type)
     {
         if (start > end)
             return -1;
         static int step = (end - start) / 10;
         static int round = 1;
-        step = step / round;
-        step = step > 0 ? step : 1;
-        round *= 2;
+        if (user_step <= 0)
+        {
+            step = step / round;
+            step = step > 0 ? step : 1;
+            round *= 2;
+        }
+        else
+        {
+            step = user_step;
+        }
 
         int mid = start + (end - start) / 2;
         float midQuality = QueryQuality(mid, captureImage, type);
@@ -126,9 +134,9 @@ extern "C"
         if (midQuality >= frontQuality && midQuality >= behindQuality)
             return mid;
         else if (midQuality < frontQuality)
-            return BisectionSearch(start, mid - 1, captureImage, type);
+            return BisectionSearch(start, mid - 1, user_step, captureImage, type);
         else
-            return BisectionSearch(mid + 1, end, captureImage, type);
+            return BisectionSearch(mid + 1, end, user_step, captureImage, type);
     }
 
     /**********

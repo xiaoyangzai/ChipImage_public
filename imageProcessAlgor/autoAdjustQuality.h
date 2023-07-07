@@ -26,12 +26,14 @@ extern "C"
      * @param minPosition               the minimum value of focus/brightness
      * @param maxPosition               the maximum value of focus/brightness
      * @param startPosition             the begining search position
+     * @param step                      the step for next position
      * @param captureImage              the function to capture the image
      * @return return 0 if successful, otherwise non-zero will return.
      */
     __declspec(dllexport) int AutoAdjust(int minPosition,
                                          int maxPosition,
                                          int startPosition,
+                                         int step,
                                          CaptureImage captureImage,
                                          QualityType type = QualityType::FOCUS);
 
@@ -39,7 +41,7 @@ extern "C"
     __declspec(dllexport) float FocusQuality(cv::Mat &image);
     __declspec(dllexport) float BrightQuality(cv::Mat &image);
 
-    int BisectionSearch(int start, int end, CaptureImage captureImage, QualityType type = QualityType::FOCUS);
+    int BisectionSearch(int start, int end, int user_step, CaptureImage captureImage, QualityType type = QualityType::FOCUS);
 
     float StatSharpnessGradient(cv::Mat &image);
     float StatSharpnessTenengrad(cv::Mat &image, const int threshold = 500);
