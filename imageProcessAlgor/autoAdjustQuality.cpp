@@ -17,14 +17,14 @@ extern "C"
     __declspec(dllexport) float ImageQuality(char *image, int imageSize, QualityType type)
     {
         char msg[256] = "";
-        sprintf_s(msg + strlen(msg), sizeof(msg) - strlen(msg), "Calling ImageQuality()....\n");
+        sprintf_s(msg + strlen(msg), sizeof(msg) - strlen(msg), "[INFO] Calling ImageQuality()....\n");
         float quality = -1.0;
         std::string imageData = Base64Decoder(image, imageSize);
         std::vector<uchar> decodedImage(imageData.begin(), imageData.end());
         cv::Mat srcImage = imdecode(decodedImage, cv::IMREAD_COLOR);
         if (!srcImage.data)
         {
-            sprintf_s(msg + strlen(msg), sizeof(msg) - strlen(msg), "Error: Failed to load image data.\n");
+            sprintf_s(msg + strlen(msg), sizeof(msg) - strlen(msg), "[ERROR] Failed to load image data.\n");
             DebugPrint(msg);
             return -1;
         }
@@ -33,29 +33,30 @@ extern "C"
         if (type == QualityType::BRIGHTNESS)
             quality = BrightQuality(srcImage);
 
-        sprintf_s(msg, sizeof(msg) - strlen(msg), "Quality: %.3f\n", quality);
+        sprintf_s(msg, sizeof(msg) - strlen(msg), "[INFO] Quality: %.3f\n", quality);
         return quality;
     }
     __declspec(dllexport) int AutoAdjust(int minPosition, int maxPosition, int startPosition, int step, CaptureImage captureImage, QualityType type)
     {
         float quality = -1.0;
         char msg[256] = "";
+        sprintf_s(msg + strlen(msg), sizeof(msg) - strlen(msg), "[INFO] Calling AutoAdjust()....\n");
         if (captureImage == NULL)
         {
-            sprintf_s(msg, sizeof(msg) - strlen(msg), "Empty image capture handler. Please check again!\n");
+            sprintf_s(msg, sizeof(msg) - strlen(msg), "[ERROR] Empty image capture handler. Please check again!\n");
             DebugPrint(msg);
             return -1;
         }
         if (minPosition > maxPosition || startPosition < minPosition || startPosition > maxPosition)
         {
-            sprintf_s(msg, sizeof(msg) - strlen(msg), "Bad focus position. Please check again!\n");
+            sprintf_s(msg, sizeof(msg) - strlen(msg), "[ERROR] Bad focus position. Please check again!\n");
             DebugPrint(msg);
             return -1;
         }
         if (!g_dynamicMem)
             g_dynamicMem = (char *)malloc(MEM_MAX_SIZE * sizeof(char));
         int optimumPosition = -1;
-        sprintf_s(msg, sizeof(msg) - strlen(msg), "[AutoAdjust] Max: %d, Min: %d, Step: %d\n", minPosition, maxPosition);
+        sprintf_s(msg, sizeof(msg) - strlen(msg), "[INFO] Max: %d, Min: %d, Step: %d\n", minPosition, maxPosition);
 
         auto startSearch = std::chrono::high_resolution_clock::now();
         optimumPosition = BisectionSearch(minPosition, maxPosition, step, captureImage, type);
@@ -63,10 +64,11 @@ extern "C"
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endSearch - startSearch).count();
         quality = QueryQuality(optimumPosition, captureImage, type);
 
-        sprintf_s(msg, sizeof(msg) - strlen(msg), "[AutoAdjust] Duration of searching optimum focus: %lld ms\n\tOptimum position: %d\n\tQuality: %.3f\n", duration, optimumPosition, quality);
+        sprintf_s(msg, sizeof(msg) - strlen(msg), "[INFO] Duration of searching optimum focus or brightness: %lld ms\tOptimum position: %d\tQuality: %.3f\n", duration, optimumPosition, quality);
         DebugPrint(msg);
         free(g_dynamicMem);
         g_dynamicMem = NULL;
+        sprintf_s(msg + strlen(msg), sizeof(msg) - strlen(msg), "[INFO] Calling AutoAdjust()....Done\n");
         return optimumPosition;
     }
 
@@ -77,16 +79,26 @@ extern "C"
         if (captureImage == NULL)
             return -1.0;
         int length = -1;
+        auto startSearch = std::chrono::high_resolution_clock::now();
         if (captureImage(g_dynamicMem, length, position) < 0)
             return -1.0;
+        auto endSearch = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endSearch - startSearch).count();
+        std::string ret = "[INFO] Duration of calling CaptureImage(): " + std::to_string(duration) + "ms\n";
+        DebugPrint(ret.c_str());
         std::string imageData = Base64Decoder(g_dynamicMem, length);
         std::vector<uchar> decodedImage(imageData.begin(), imageData.end());
         cv::Mat imageMat = imdecode(decodedImage, cv::IMREAD_COLOR);
+        float quality = -1.0;
         if (type == QualityType::FOCUS)
-            return FocusQuality(imageMat);
+            quality = FocusQuality(imageMat);
         if (type == QualityType::BRIGHTNESS)
-            return BrightQuality(imageMat);
-        return -1;
+            quality = BrightQuality(imageMat);
+        auto endCalling = std::chrono::high_resolution_clock::now();
+        duration = std::chrono::duration_cast<std::chrono::milliseconds>(endCalling - startSearch).count();
+        ret = "[INFO] Duration of calling QueryQuality(): " + std::to_string(duration) + "ms\n";
+        DebugPrint(ret.c_str());
+        return quality;
     }
 
     __declspec(dllexport) float FocusQuality(cv::Mat &image)
@@ -94,7 +106,7 @@ extern "C"
         float quality = -1.0;
         // TODO: calculate the image quality based with the current focus setting
         quality = StatSharpnessTenengrad(image);
-        std::string ret = "Image focus quality: " + std::to_string(quality);
+        std::string ret = "[INFO] Image focus quality: " + std::to_string(quality);
         DebugPrint(ret.c_str());
         return quality;
     }
@@ -104,7 +116,7 @@ extern "C"
         float quality = -1.0;
         // TODO: calculate the image quality based with the current focus setting
         quality = 255 - abs(StatBrightnessRMS(image) - 150);
-        std::string ret = "Image brightness quality: " + std::to_string(quality);
+        std::string ret = "[INFO] Image brightness quality: " + std::to_string(quality);
         DebugPrint(ret.c_str());
         return quality;
     }
