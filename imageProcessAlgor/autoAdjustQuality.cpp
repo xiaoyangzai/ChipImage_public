@@ -38,7 +38,7 @@ extern "C"
         sprintf_s(msg, sizeof(msg) - strlen(msg), "[INFO] Quality: %.3f\n", quality);
         return quality;
     }
-    __declspec(dllexport) int AutoAdjust(int minPosition, int maxPosition, int step, CaptureImage captureImage, int startPosition, QualityType type)
+    __declspec(dllexport) int AutoAdjust(int minPosition, int maxPosition, int step, CaptureImage captureImage, int startPosition, QualityType type, SearchStrategyType strategy)
     {
         float quality = -1.0;
         char msg[256] = "";
@@ -63,7 +63,17 @@ extern "C"
         sprintf_s(msg, sizeof(msg) - strlen(msg), "[INFO] Position range: [%d, %d]. Start search poision: %d and each adjuestment step: %d\n", minPosition, maxPosition, startPosition, step);
 
         auto startSearch = std::chrono::high_resolution_clock::now();
-        optimumPosition = BisectionSearch(minPosition, maxPosition, step, captureImage, startPosition, type);
+        switch (strategy)
+        {
+        case SearchStrategyType::BISECTION:
+            sprintf_s(msg, sizeof(msg) - strlen(msg), "[INFO] Using Bisection search strategy!\n");
+            optimumPosition = BisectionSearch(minPosition, maxPosition, step, captureImage, startPosition, type);
+            break;
+        case SearchStrategyType::SMARTSCAN:
+            sprintf_s(msg, sizeof(msg) - strlen(msg), "[INFO] Using Smart scan search strategy!\n");
+            optimumPosition = RefocusSearch(minPosition, maxPosition, step, captureImage, startPosition, type);
+            break;
+        }
         auto endSearch = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endSearch - startSearch).count();
         quality = QueryQuality(optimumPosition, captureImage, type);
@@ -125,6 +135,50 @@ extern "C"
         std::string ret = "[INFO] Image brightness quality: " + std::to_string(quality);
         DebugPrint(ret.c_str());
         return quality;
+    }
+
+    int RefocusSearch(int begin, int end, int userStep, CaptureImage captureImage, int start, QualityType type)
+    {
+        std::ostringstream result;
+        int direction = 1; // 搜索方向，1 表示向右，-1 表示向左, 首先向右搜索
+        int directChangedTimes = 2;
+        if (start < 0 || start < begin || start > end)
+            start = (begin + end) / 2;
+
+        int pos = start;
+        int previous = start;
+        while (pos >= begin && pos <= end)
+        {
+            // 向右搜索最大值
+            if (direction > 0)
+            {
+                while ((pos + direction * userStep) <= end && QueryQuality(pos, captureImage, type) < QueryQuality(pos + direction * userStep, captureImage, type))
+                {
+                    result << "Direction: " << direction << "\t Compare: " << pos << " -> " << pos + direction * userStep << std::endl;
+                    pos += direction * userStep;
+                }
+            }
+            else
+            {
+                while ((pos + direction * userStep) >= begin && QueryQuality(pos, captureImage, type) < QueryQuality(pos + direction * userStep, captureImage, type))
+                {
+                    result << "Direction: " << direction << "\t Compare: " << pos << " -> " << pos + direction * userStep << std::endl;
+                    pos += direction * userStep;
+                }
+            }
+            if (pos == start)
+            { // 当前pos位置为起始位置并且比右边元素大，则改变搜索方向
+                result << "Change direction " << direction << " -> ";
+                direction *= -1;
+                std::cout << direction << std::endl;
+                if (--directChangedTimes == 0)
+                    break;
+                continue;
+            }
+            break;
+        }
+        DebugPrint(result.str().c_str());
+        return pos;
     }
 
     int BisectionSearch(int start, int end, int user_step, CaptureImage captureImage, int startPosition, QualityType type)
