@@ -10,6 +10,8 @@ using namespace cv;
 using namespace std;
 #define MEM_MAX_SIZE 1024 * 1024 * 15
 static char *g_dynamicMem = NULL;
+static bool isFocusFirstFlag = true;
+static bool isBrightFirstFlag = true;
 
 extern "C"
 {
@@ -36,10 +38,12 @@ extern "C"
         sprintf_s(msg, sizeof(msg) - strlen(msg), "[INFO] Quality: %.3f\n", quality);
         return quality;
     }
-    __declspec(dllexport) int AutoAdjust(int minPosition, int maxPosition, int startPosition, int step, CaptureImage captureImage, QualityType type)
+    __declspec(dllexport) int AutoAdjust(int minPosition, int maxPosition, int step, CaptureImage captureImage, int startPosition, QualityType type)
     {
         float quality = -1.0;
         char msg[256] = "";
+        isFocusFirstFlag = true;
+        isBrightFirstFlag = true;
         sprintf_s(msg + strlen(msg), sizeof(msg) - strlen(msg), "[INFO] Calling AutoAdjust()....\n");
         if (captureImage == NULL)
         {
@@ -47,7 +51,7 @@ extern "C"
             DebugPrint(msg);
             return -1;
         }
-        if (minPosition > maxPosition || startPosition < minPosition || startPosition > maxPosition)
+        if (minPosition > maxPosition || (startPosition > 0 && (startPosition < minPosition || startPosition > maxPosition)))
         {
             sprintf_s(msg, sizeof(msg) - strlen(msg), "[ERROR] Bad focus position. Please check again!\n");
             DebugPrint(msg);
@@ -56,10 +60,10 @@ extern "C"
         if (!g_dynamicMem)
             g_dynamicMem = (char *)malloc(MEM_MAX_SIZE * sizeof(char));
         int optimumPosition = -1;
-        sprintf_s(msg, sizeof(msg) - strlen(msg), "[INFO] Max: %d, Min: %d, Step: %d\n", minPosition, maxPosition);
+        sprintf_s(msg, sizeof(msg) - strlen(msg), "[INFO] Position range: [%d, %d]. Start search poision: %d and each adjuestment step: %d\n", minPosition, maxPosition, startPosition, step);
 
         auto startSearch = std::chrono::high_resolution_clock::now();
-        optimumPosition = BisectionSearch(minPosition, maxPosition, step, captureImage, type);
+        optimumPosition = BisectionSearch(minPosition, maxPosition, step, captureImage, startPosition, type);
         auto endSearch = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endSearch - startSearch).count();
         quality = QueryQuality(optimumPosition, captureImage, type);
@@ -69,6 +73,8 @@ extern "C"
         free(g_dynamicMem);
         g_dynamicMem = NULL;
         sprintf_s(msg + strlen(msg), sizeof(msg) - strlen(msg), "[INFO] Calling AutoAdjust()....Done\n");
+        isFocusFirstFlag = true;
+        isBrightFirstFlag = true;
         return optimumPosition;
     }
 
@@ -121,7 +127,7 @@ extern "C"
         return quality;
     }
 
-    int BisectionSearch(int start, int end, int user_step, CaptureImage captureImage, QualityType type)
+    int BisectionSearch(int start, int end, int user_step, CaptureImage captureImage, int startPosition, QualityType type)
     {
         if (start > end)
             return -1;
@@ -139,6 +145,23 @@ extern "C"
         }
 
         int mid = start + (end - start) / 2;
+        switch (type)
+        {
+        case QualityType::BRIGHTNESS:
+            if (isBrightFirstFlag)
+            {
+                mid = startPosition < 0 ? mid : startPosition;
+                isBrightFirstFlag = false;
+            }
+            break;
+        case QualityType::FOCUS:
+            if (isFocusFirstFlag)
+            {
+                mid = startPosition < 0 ? mid : startPosition;
+                isFocusFirstFlag = false;
+            }
+            break;
+        }
         float midQuality = QueryQuality(mid, captureImage, type);
         float frontQuality = QueryQuality(mid - step, captureImage, type);
         float behindQuality = QueryQuality(mid + step, captureImage, type);
@@ -146,9 +169,9 @@ extern "C"
         if (midQuality >= frontQuality && midQuality >= behindQuality)
             return mid;
         else if (midQuality < frontQuality)
-            return BisectionSearch(start, mid - 1, user_step, captureImage, type);
+            return BisectionSearch(start, mid - 1, user_step, captureImage, startPosition, type);
         else
-            return BisectionSearch(mid + 1, end, user_step, captureImage, type);
+            return BisectionSearch(mid + 1, end, user_step, captureImage, startPosition, type);
     }
 
     /**********
