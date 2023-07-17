@@ -69,7 +69,7 @@ extern "C"
             sprintf_s(msg, sizeof(msg) - strlen(msg), "[INFO] Using Bisection search strategy!\n");
             optimumPosition = BisectionSearch(minPosition, maxPosition, step, captureImage, startPosition, type);
             break;
-        case SearchStrategyType::SMARTSCAN:
+        case SearchStrategyType::REFOCUS:
             sprintf_s(msg, sizeof(msg) - strlen(msg), "[INFO] Using Smart scan search strategy!\n");
             optimumPosition = RefocusSearch(minPosition, maxPosition, step, captureImage, startPosition, type);
             break;
@@ -86,6 +86,30 @@ extern "C"
         isFocusFirstFlag = true;
         isBrightFirstFlag = true;
         return optimumPosition;
+    }
+
+    __declspec(dllexport) int AutoAdjustFocus(int minPosition,
+                                              int maxPosition,
+                                              int step,
+                                              CaptureImage captureImage,
+                                              int startPosition)
+    {
+        if (startPosition < 0)
+            return AutoAdjust(minPosition, maxPosition, step, captureImage, startPosition, QualityType::FOCUS, SearchStrategyType::BISECTION);
+        else
+            return AutoAdjust(minPosition, maxPosition, step, captureImage, startPosition, QualityType::FOCUS, SearchStrategyType::REFOCUS);
+    }
+
+    __declspec(dllexport) int AutoAdjustLight(int minPosition,
+                                              int maxPosition,
+                                              int step,
+                                              CaptureImage captureImage,
+                                              int startPosition)
+    {
+        if (startPosition < 0)
+            return AutoAdjust(minPosition, maxPosition, step, captureImage, startPosition, QualityType::BRIGHTNESS, SearchStrategyType::BISECTION);
+        else
+            return AutoAdjust(minPosition, maxPosition, step, captureImage, startPosition, QualityType::BRIGHTNESS, SearchStrategyType::REFOCUS);
     }
 
     __declspec(dllexport) float QueryQuality(int position, CaptureImage captureImage, QualityType type)
@@ -140,7 +164,7 @@ extern "C"
     int RefocusSearch(int begin, int end, int userStep, CaptureImage captureImage, int start, QualityType type)
     {
         std::ostringstream result;
-        int direction = 1; // 搜索方向，1 表示向右，-1 表示向左, 首先向右搜索
+        int direction = 1;
         int directChangedTimes = 2;
         if (start < 0 || start < begin || start > end)
             start = (begin + end) / 2;
@@ -149,7 +173,6 @@ extern "C"
         int previous = start;
         while (pos >= begin && pos <= end)
         {
-            // 向右搜索最大值
             if (direction > 0)
             {
                 while ((pos + direction * userStep) <= end && QueryQuality(pos, captureImage, type) < QueryQuality(pos + direction * userStep, captureImage, type))
@@ -167,7 +190,7 @@ extern "C"
                 }
             }
             if (pos == start)
-            { // 当前pos位置为起始位置并且比右边元素大，则改变搜索方向
+            {
                 result << "Change direction " << direction << " -> ";
                 direction *= -1;
                 std::cout << direction << std::endl;

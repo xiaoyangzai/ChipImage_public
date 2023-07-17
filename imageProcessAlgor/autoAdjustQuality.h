@@ -14,7 +14,7 @@ extern "C"
     enum SearchStrategyType
     {
         BISECTION,
-        SMARTSCAN
+        REFOCUS
     };
     typedef int (*CaptureImage)(char *, int &, int);
 
@@ -27,6 +27,34 @@ extern "C"
      */
     __declspec(dllexport) float ImageQuality(char *image, int imageSize, QualityType type = QualityType::FOCUS);
 
+    /*
+     * @brief calculate the optimal focus position where the image light quality is best
+     * @param minPosition               the minimum value of focus/brightness
+     * @param maxPosition               the maximum value of focus/brightness
+     * @param step                      the step for next position
+     * @param startPosition             the start position to search. Default value is -1 that means no speacified by user.
+     * @param captureImage              the function to capture the image
+     * @return return the optimal focus position if successful, otherwise -1 will return.
+     */
+    __declspec(dllexport) int AutoAdjustFocus(int minPosition,
+                                         int maxPosition,
+                                         int step,
+                                         CaptureImage captureImage,
+                                         int startPosition = -1);
+    /*
+     * @brief calculate the optimal light position where the image light quality is best
+     * @param minPosition               the minimum value of focus/brightness
+     * @param maxPosition               the maximum value of focus/brightness
+     * @param step                      the step for next position
+     * @param startPosition             the start position to search. Default value is -1 that means no speacified by user.
+     * @param captureImage              the function to capture the image
+     * @return return the optimal light position if successful, otherwise -1 will return.
+     */
+    __declspec(dllexport) int AutoAdjustLight(int minPosition,
+                                         int maxPosition,
+                                         int step,
+                                         CaptureImage captureImage,
+                                         int startPosition = -1);
     /**
      * @brief calculate the quality on specified focus value
      * @param minPosition               the minimum value of focus/brightness
@@ -44,7 +72,7 @@ extern "C"
                                          CaptureImage captureImage,
                                          int startPosition = -1,
                                          QualityType type = QualityType::FOCUS,
-                                         SearchStrategyType strategy = SearchStrategyType::SMARTSCAN);
+                                         SearchStrategyType strategy = SearchStrategyType::REFOCUS);
 
     __declspec(dllexport) float QueryQuality(int position, CaptureImage captureImage, QualityType type = QualityType::FOCUS);
     __declspec(dllexport) float FocusQuality(cv::Mat &image);
