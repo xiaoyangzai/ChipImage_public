@@ -112,16 +112,17 @@ void test_base64_image_matcher(std::string image, std::string target)
     Mat targetMat = imread(target);
     imencode(".jpg", targetMat, data);
     string encodedTarget = Base64Encoder(reinterpret_cast<char *>(data.data()), data.size());
-    int original_x = 600;
-    int original_y = 500;
+    int original_x = 700;
+    int original_y = 450;
     int matched_x = 0;
     int matched_y = 0;
     auto quality = MatchTarget(&encodedImg[0], encodedImg.size(), &encodedTarget[0], encodedTarget.size(), original_x, original_y, matched_x, matched_y, NULL);
-    if (quality < 0) {
+    if (quality < 0)
+    {
         std::cout << "Error happened during searhing the template image.\n";
         return;
     }
-    cv::rectangle(img, cv::Point(matched_x, matched_y), cv::Point(matched_x+ targetMat.cols, matched_y + targetMat.rows), cv::Scalar(0, 255, 0), 2);
+    cv::rectangle(img, cv::Point(matched_x, matched_y), cv::Point(matched_x + targetMat.cols, matched_y + targetMat.rows), cv::Scalar(0, 255, 0), 2);
     std::ostringstream text;
     text << "Quality: " << quality << " X: " << matched_x - original_x << " Y: " << matched_y - original_y;
     cv::putText(img, text.str(), cv::Point(50, 50), cv::FONT_HERSHEY_SIMPLEX, 2, cv::Scalar(0, 255, 0), 5);
@@ -191,13 +192,15 @@ void test_cut_trace_validation(std::string image)
     int maxArea = -1;
     int ret = CutTraceDetection(&encodedImg[0], encodedImg.size(), traceAngle, traceCenterOffset, tranceWidth, maxTraceWidth, maxArea);
 }
-void test_focus_quality_validation(std::string image) {
+void test_focus_quality_validation(std::string image)
+{
     Mat img = imread(image);
     float quality = FocusQuality(img);
     std::cout << "Focus Quality: " << quality << std::endl;
     return;
 }
-void test_bright_quality_validation(std::string image) {
+void test_bright_quality_validation(std::string image)
+{
     Mat img = imread(image);
     float quality = BrightQuality(img);
     std::cout << "Brightness Quality: " << quality << std::endl;
