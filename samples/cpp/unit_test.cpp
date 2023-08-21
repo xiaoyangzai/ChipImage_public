@@ -18,7 +18,7 @@ void test_base64_text();
 void test_base64_image_show(std::string path);
 void test_base64_image_matcher(std::string image, std::string target);
 void test_base64_image_rotate_transform(std::string image);
-void test_image_pixel_size_measure(std::string image);
+void test_image_pixel_size_measure(std::string image, std::string target);
 void test_cut_baseline_detection(std::string image);
 void test_cut_trace_validation(std::string image);
 void test_focus_quality_validation(std::string image);
@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
         test_base64_image_rotate_transform("rotate_test.jpg");
         break;
     case 5:
-        test_image_pixel_size_measure("image.jpg");
+        test_image_pixel_size_measure("image.jpg", "target.jpg");
         break;
     case 6:
         test_cut_baseline_detection("image.jpg");
@@ -155,15 +155,23 @@ void test_base64_image_rotate_transform(std::string image)
     cv::waitKey(0);
 }
 
-void test_image_pixel_size_measure(std::string image)
+void test_image_pixel_size_measure(std::string image, std::string target)
 {
     Mat img = imread(image);
     vector<uchar> data;
     imencode(".jpg", img, data);
     string encodedImg = Base64Encoder(reinterpret_cast<char *>(data.data()), data.size());
-    int pixelSize = 0;
-    int ret = PixelSizeMeasure(&encodedImg[0], encodedImg.size(), 8, pixelSize);
-    std::cout << "Pixel Size: " << pixelSize << std::endl;
+
+    Mat targetMat = imread(target);
+    vector<uchar> targetData;
+    imencode(".jpg", img, targetData);
+    string encodedTarget = Base64Encoder(reinterpret_cast<char *>(targetData.data()), targetData.size());
+
+    int offsetOnX = 0;
+    int offsetOnY = 0;
+    int quality = PixelSizeMeasure(&encodedImg[0], encodedImg.size(), &encodedTarget[0], encodedTarget.size(), offsetOnX, offsetOnY);
+    std::cout << "Quality: " << quality << std::endl;
+    std::cout << "offset on X: " << offsetOnX << "\t offset on Y: " << offsetOnY << std::endl;
 }
 
 void test_cut_baseline_detection(std::string image)

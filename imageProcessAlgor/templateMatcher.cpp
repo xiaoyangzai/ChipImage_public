@@ -44,6 +44,12 @@ extern "C"
 		// Draw the box for the searched target image
 		cv::rectangle(imageMat, maxLoc, Point(matchedPosX + targetMat.cols, matchedPosY + targetMat.rows), Scalar(0, 255, 0), 5);
 
+		if (!outputImage)
+		{
+			sprintf_s(msg, sizeof(msg) - strlen(msg), "offset : %d x %d\nQuality: %d\n", matchedPosX, matchedPosY, quality);
+			DebugPrint(msg);
+			return quality;
+		}
 		// showShow the offset of the location of matched target image and the matching quality
 		string text = "X=" + to_string(matchedPosX - originalPosX) + " Y=" + to_string(matchedPosY - originalPosY) + " Q=" + to_string(quality);
 		putText(imageMat, text, Point(20, 80), FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 5);
