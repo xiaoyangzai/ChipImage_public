@@ -2,7 +2,6 @@ file(GLOB SOURCES "*.cpp")
 
 add_executable(unit_test ${SOURCES})
 
-# 添加头文件搜索路径
 include_directories(${PROJECT_SOURCE_DIR}/imageProcessAlgor)
 if(OpenCV_FOUND)
     # Add OpenCV header files top project
@@ -11,9 +10,11 @@ if(OpenCV_FOUND)
     # Add OpenCV library to project
     target_link_libraries(unit_test ${OpenCV_LIBS})
 endif()
-# 链接所需的库文件
-target_link_libraries(unit_test Myimageops)
+target_link_libraries(unit_test image_process)
 
 set_target_properties(unit_test PROPERTIES
     OUTPUT_NAME "unit_test"
 )
+
+add_custom_command(TARGET unit_test POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:unit_test> ${PROJECT_SOURCE_DIR}/bin/)
