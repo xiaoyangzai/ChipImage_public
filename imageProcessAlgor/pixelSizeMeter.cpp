@@ -20,6 +20,10 @@ extern "C"
 		std::string imageData = Base64Decoder(postImage, postImageSize);
 		std::vector<uchar> decodedImage(imageData.begin(), imageData.end());
 		cv::Mat imageMat = imdecode(decodedImage, cv::IMREAD_COLOR);
+
+		std::string targetData = Base64Decoder(target, targetSize);
+		std::vector<uchar> decodedTarget(targetData.begin(), targetData.end());
+		cv::Mat targetMat = imdecode(decodedTarget, cv::IMREAD_COLOR);
         int matchedPosX = -1;
         int matchedPosY = -1;
         int quality = MatchTarget(postImage, postImageSize, target, targetSize, imageMat.rows / 2, imageMat.cols / 2, matchedPosX, matchedPosY, NULL);
@@ -27,11 +31,11 @@ extern "C"
             return -1;
         }
 
-        offsetOnX = matchedPosX - imageMat.rows / 2;
-        offsetOnY = matchedPosY - imageMat.cols / 2;
-        sprintf_s(msg + strlen(msg), sizeof(msg) - strlen(msg), "offset on X: %d\toffset on Y: %d\n", offsetOnX, offsetOnY);
+        offsetOnX = matchedPosX - targetMat.cols / 2 - imageMat.cols / 2;
+        offsetOnY = matchedPosY - targetMat.rows / 2 - imageMat.rows / 2;
+        sprintf_s(msg + strlen(msg), sizeof(msg) - strlen(msg), "Quality: %d\toffset on X: %d\toffset on Y: %d\n", quality, offsetOnX, offsetOnY);
         sprintf_s(msg + strlen(msg), sizeof(msg) - strlen(msg), "Calling PixelSizeMeasure()....Done\n");
         DebugPrint(msg);
-        return 0;
+        return quality;
     }
 }
