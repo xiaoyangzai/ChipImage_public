@@ -11,7 +11,8 @@ extern "C"
 	 * @param tempImageSize the template image buffer size
 	 * @param offsetOnX		offset on X dim compared to template image X before moving
 	 * @param offsetOnY		offset on Y dim compared to template image Y before moving
+	 * @param outputImage 	point to the output image buffer
 	 * @return 				matched quality if successful, otherwise non-zero will return.
 	 */
-	__declspec(dllexport) int PixelSizeMeasure(char *postImage, int postImageSize, char *templateImage, int tempImageSize, int& offsetOnX, int& offsetOnY);
+	__declspec(dllexport) int PixelSizeMeasure(char *postImage, int postImageSize, char *templateImage, int tempImageSize, int& offsetOnX, int& offsetOnY, char** outputImage);
 }

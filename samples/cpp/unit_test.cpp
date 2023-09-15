@@ -169,7 +169,7 @@ void test_image_pixel_size_measure(std::string image, std::string target)
 
     int offsetOnX = 0;
     int offsetOnY = 0;
-    int quality = PixelSizeMeasure(&encodedImg[0], encodedImg.size(), &encodedTarget[0], encodedTarget.size(), offsetOnX, offsetOnY);
+    int quality = PixelSizeMeasure(&encodedImg[0], encodedImg.size(), &encodedTarget[0], encodedTarget.size(), offsetOnX, offsetOnY, NULL);
     std::cout << "Quality: " << quality << std::endl;
     std::cout << "offset on X: " << offsetOnX << "\t offset on Y: " << offsetOnY << std::endl;
 }
