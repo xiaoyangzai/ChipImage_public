@@ -23,11 +23,9 @@ void test_cut_baseline_detection(std::string image);
 void test_cut_trace_validation(std::string image);
 void test_focus_quality_validation(std::string image);
 void test_bright_quality_validation(std::string image);
-int main(int argc, char *argv[])
-{
+int main(int argc, char* argv[]) {
     int index = -1;
-    do
-    {
+    do {
         std::cout << "Function list: \n\t1. Base64 encoder and decoder."
                   << "\n\t2. Show image via encoded/decoded data."
                   << "\n\t3. Image template matcher."
@@ -41,8 +39,7 @@ int main(int argc, char *argv[])
         std::cin >> index;
     } while (0);
 
-    switch (index)
-    {
+    switch (index) {
     case 1:
         test_base64_text();
         break;
@@ -76,8 +73,7 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-void test_base64_text()
-{
+void test_base64_text() {
     char msg[] = "hello world";
     std::cout << "msg: " << msg << std::endl;
     auto imageEncodedData = Base64Encoder(msg, strlen(msg));
@@ -86,13 +82,12 @@ void test_base64_text()
     std::cout << "Decoded msg: " << imageDecodedData << std::endl;
 }
 
-void test_base64_image_show(std::string path)
-{
+void test_base64_image_show(std::string path) {
     Mat img = imread(path);
     vector<uchar> data;
     std::cout << "start show image...\n";
     imencode(".jpg", img, data);
-    string encodedImg = Base64Encoder(reinterpret_cast<char *>(data.data()), data.size());
+    string encodedImg = Base64Encoder(reinterpret_cast<char*>(data.data()), data.size());
 
     string decodedData = Base64Decoder(&encodedImg[0], encodedImg.size());
     vector<uchar> decodedImage(decodedData.begin(), decodedData.end());
@@ -101,28 +96,38 @@ void test_base64_image_show(std::string path)
     cv::waitKey(0);
 }
 
-void test_base64_image_matcher(std::string image, std::string target)
-{
+void test_base64_image_matcher(std::string image, std::string target) {
     Mat img = imread(image);
     vector<uchar> data;
     imencode(".jpg", img, data);
-    string encodedImg = Base64Encoder(reinterpret_cast<char *>(data.data()), data.size());
+    string encodedImg = Base64Encoder(reinterpret_cast<char*>(data.data()), data.size());
 
     data.clear();
     Mat targetMat = imread(target);
     imencode(".jpg", targetMat, data);
-    string encodedTarget = Base64Encoder(reinterpret_cast<char *>(data.data()), data.size());
+    string encodedTarget = Base64Encoder(reinterpret_cast<char*>(data.data()), data.size());
     int original_x = 700;
     int original_y = 450;
     int matched_x = 0;
     int matched_y = 0;
-    auto quality = MatchTarget(&encodedImg[0], encodedImg.size(), &encodedTarget[0], encodedTarget.size(), original_x, original_y, matched_x, matched_y, NULL);
-    if (quality < 0)
-    {
+    auto quality = MatchTarget(&encodedImg[0],
+                               encodedImg.size(),
+                               &encodedTarget[0],
+                               encodedTarget.size(),
+                               original_x,
+                               original_y,
+                               matched_x,
+                               matched_y,
+                               NULL);
+    if (quality < 0) {
         std::cout << "Error happened during searhing the template image.\n";
         return;
     }
-    cv::rectangle(img, cv::Point(matched_x, matched_y), cv::Point(matched_x + targetMat.cols, matched_y + targetMat.rows), cv::Scalar(0, 255, 0), 2);
+    cv::rectangle(img,
+                  cv::Point(matched_x, matched_y),
+                  cv::Point(matched_x + targetMat.cols, matched_y + targetMat.rows),
+                  cv::Scalar(0, 255, 0),
+                  2);
     std::ostringstream text;
     text << "Quality: " << quality << " X: " << matched_x - original_x << " Y: " << matched_y - original_y;
     cv::putText(img, text.str(), cv::Point(50, 50), cv::FONT_HERSHEY_SIMPLEX, 2, cv::Scalar(0, 255, 0), 5);
@@ -132,17 +137,15 @@ void test_base64_image_matcher(std::string image, std::string target)
     std::cout << "Quality: " << quality << " X: " << matched_x - original_x << " Y: " << matched_y - original_y;
 }
 
-void test_base64_image_rotate_transform(std::string image)
-{
+void test_base64_image_rotate_transform(std::string image) {
     Mat img = imread(image);
-    if (!img.data)
-    {
+    if (!img.data) {
         std::cout << "Failed to load image " << image << "\nError: " << strerror(errno) << std::endl;
         return;
     }
     vector<uchar> data;
     imencode(".jpg", img, data);
-    string encodedImg = Base64Encoder(reinterpret_cast<char *>(data.data()), data.size());
+    string encodedImg = Base64Encoder(reinterpret_cast<char*>(data.data()), data.size());
     double angle = 0.0;
     int ret = RotateTransform(&encodedImg[0], encodedImg.size(), angle);
     std::cout << "Angle: " << angle << std::endl;
@@ -155,60 +158,67 @@ void test_base64_image_rotate_transform(std::string image)
     cv::waitKey(0);
 }
 
-void test_image_pixel_size_measure(std::string image, std::string target)
-{
+void test_image_pixel_size_measure(std::string image, std::string target) {
     Mat img = imread(image);
     vector<uchar> data;
     imencode(".jpg", img, data);
-    string encodedImg = Base64Encoder(reinterpret_cast<char *>(data.data()), data.size());
+    string encodedImg = Base64Encoder(reinterpret_cast<char*>(data.data()), data.size());
 
     Mat targetMat = imread(target);
     vector<uchar> targetData;
     imencode(".jpg", img, targetData);
-    string encodedTarget = Base64Encoder(reinterpret_cast<char *>(targetData.data()), targetData.size());
+    string encodedTarget = Base64Encoder(reinterpret_cast<char*>(targetData.data()), targetData.size());
 
     int offsetOnX = 0;
     int offsetOnY = 0;
-    int quality = PixelSizeMeasure(&encodedImg[0], encodedImg.size(), &encodedTarget[0], encodedTarget.size(), offsetOnX, offsetOnY, NULL);
+    int quality = PixelSizeMeasure(&encodedImg[0],
+                                   encodedImg.size(),
+                                   &encodedTarget[0],
+                                   encodedTarget.size(),
+                                   offsetOnX,
+                                   offsetOnY,
+                                   NULL);
     std::cout << "Quality: " << quality << std::endl;
     std::cout << "offset on X: " << offsetOnX << "\t offset on Y: " << offsetOnY << std::endl;
 }
 
-void test_cut_baseline_detection(std::string image)
-{
+void test_cut_baseline_detection(std::string image) {
     Mat img = imread(image);
     vector<uchar> data;
     imencode(".jpg", img, data);
-    string encodedImg = Base64Encoder(reinterpret_cast<char *>(data.data()), data.size());
+    string encodedImg = Base64Encoder(reinterpret_cast<char*>(data.data()), data.size());
     int delta_x = -1;
     int delta_y = -1;
     int ret = CutLineDetection(&encodedImg[0], encodedImg.size(), delta_x, delta_y);
     std::cout << "Delta X: " << delta_x << "\tDelta Y: " << delta_y << std::endl;
 }
 
-void test_cut_trace_validation(std::string image)
-{
+void test_cut_trace_validation(std::string image) {
     Mat img = imread(image);
     vector<uchar> data;
     imencode(".jpg", img, data);
-    string encodedImg = Base64Encoder(reinterpret_cast<char *>(data.data()), data.size());
+    string encodedImg = Base64Encoder(reinterpret_cast<char*>(data.data()), data.size());
 
     double traceAngle = 0.0;
     int traceCenterOffset = 0;
     int tranceWidth = -1;
     int maxTraceWidth = -1;
     int maxArea = -1;
-    int ret = CutTraceDetection(&encodedImg[0], encodedImg.size(), traceAngle, traceCenterOffset, tranceWidth, maxTraceWidth, maxArea);
+    int ret = CutTraceDetection(&encodedImg[0],
+                                encodedImg.size(),
+                                traceAngle,
+                                traceCenterOffset,
+                                tranceWidth,
+                                maxTraceWidth,
+                                maxArea);
 }
-void test_focus_quality_validation(std::string image)
-{
+void test_focus_quality_validation(std::string image) {
     Mat img = imread(image);
     float quality = FocusQuality(img);
     std::cout << "Focus Quality: " << quality << std::endl;
     return;
 }
-void test_bright_quality_validation(std::string image)
-{
+void test_bright_quality_validation(std::string image) {
     Mat img = imread(image);
     float quality = BrightQuality(img);
     std::cout << "Brightness Quality: " << quality << std::endl;

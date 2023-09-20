@@ -4,15 +4,14 @@
 #pragma once
 
 #include <iostream>
-extern "C"
-{
-	__declspec(dllexport) void BaseFunctionTest(char *data, int length);
-	/**
-	 * @brief output the debug message via std::cout or callback function user setting
-	 * @param message 		debug message string buffer
-	 * @return return 0 if successful, otherwise non-zero will return.
-	 */
-	__declspec(dllexport) void DebugPrint(const char *message);
+extern "C" {
+__declspec(dllexport) void BaseFunctionTest(char* data, int length);
+/**
+ * @brief output the debug message via std::cout or callback function user setting
+ * @param message 		debug message string buffer
+ * @return return 0 if successful, otherwise non-zero will return.
+ */
+__declspec(dllexport) void DebugPrint(const char* message);
 }
 
 /**
@@ -21,7 +20,7 @@ extern "C"
  * @param length			the data length of the buffer
  * @return return the encoded string. Empty string will return if failed.
  */
-__declspec(dllexport) std::string Base64Encoder(char *data, int length);
+__declspec(dllexport) std::string Base64Encoder(char* data, int length);
 
 /**
  * @brief decoding the data with the Base64
@@ -29,4 +28,4 @@ __declspec(dllexport) std::string Base64Encoder(char *data, int length);
  * @param length			the data length of the buffer
  * @return return the decoded string. Empty string will return if failed.
  */
-__declspec(dllexport) std::string Base64Decoder(char *data, int length);
+__declspec(dllexport) std::string Base64Decoder(char* data, int length);
