@@ -31,7 +31,8 @@ __declspec(dllexport) int AutoAdjustFocus(int minPosition,
                                           int maxPosition,
                                           int step,
                                           CaptureImage captureImage,
-                                          int startPosition = -1);
+                                          int startPosition = -1,
+                                          int timeout = -1);
 /*
  * @brief calculate the optimal light position where the image light quality is best
  * @param minPosition               the minimum value of focus/brightness

@@ -3,6 +3,7 @@
 #include <wincrypt.h>
 #include <iostream>
 #include <chrono>
+#include <future>
 #include <stdio.h>
 #include "cutImageAlgr.h"
 #include "autoAdjustQuality.h"
@@ -104,23 +105,32 @@ __declspec(dllexport) int AutoAdjustFocus(int minPosition,
                                           int maxPosition,
                                           int step,
                                           CaptureImage captureImage,
-                                          int startPosition) {
+                                          int startPosition,
+                                          int timeout) {
+    SearchStrategyType type;
     if (startPosition < 0)
-        return AutoAdjust(minPosition,
-                          maxPosition,
-                          step,
-                          captureImage,
-                          startPosition,
-                          QualityType::FOCUS,
-                          SearchStrategyType::BISECTION);
+        type = SearchStrategyType::BISECTION;
     else
-        return AutoAdjust(minPosition,
-                          maxPosition,
-                          step,
-                          captureImage,
-                          startPosition,
-                          QualityType::FOCUS,
-                          SearchStrategyType::REFOCUS);
+        type = SearchStrategyType::REFOCUS;
+
+    if (timeout < 0) {
+        return AutoAdjust(minPosition, maxPosition, step, captureImage, startPosition, QualityType::FOCUS, type);
+    } else {
+        std::future<int> fut = std::async(std::launch::async,
+                                          AutoAdjust,
+                                          minPosition,
+                                          maxPosition,
+                                          step,
+                                          captureImage,
+                                          startPosition,
+                                          QualityType::FOCUS,
+                                          type);
+        if (fut.wait_for(std::chrono::seconds(timeout)) == std::future_status::ready) {
+            return fut.get();
+        } else {
+            throw std::exception("Timeout");
+        }
+    }
 }
 
 __declspec(dllexport) int AutoAdjustLight(int minPosition,
