@@ -64,7 +64,8 @@ __declspec(dllexport) int AutoAdjust(int minPosition,
                                      CaptureImage captureImage,
                                      int startPosition = -1,
                                      QualityType type = QualityType::FOCUS,
-                                     SearchStrategyType strategy = SearchStrategyType::REFOCUS);
+                                     SearchStrategyType strategy = SearchStrategyType::REFOCUS,
+                                     int timeout = -1);
 
 __declspec(dllexport) float QueryQuality(int position,
                                          CaptureImage captureImage,
@@ -88,7 +89,8 @@ int BisectionSearch(int start,
                     int userStep,
                     CaptureImage captureImage,
                     int currentPosition = -1,
-                    QualityType type = QualityType::FOCUS);
+                    QualityType type = QualityType::FOCUS,
+                    int timeout = -1);
 
 /**
  * @brief Refocus search strategy to look for the optimum quality within the availiable position range
@@ -105,7 +107,8 @@ int RefocusSearch(int start,
                   int userStep,
                   CaptureImage captureImage,
                   int currentPosition = -1,
-                  QualityType type = QualityType::FOCUS);
+                  QualityType type = QualityType::FOCUS,
+                  int timeout = -1);
 
 float StatSharpnessGradient(cv::Mat& image);
 float StatSharpnessTenengrad(cv::Mat& image, const int threshold = 500);

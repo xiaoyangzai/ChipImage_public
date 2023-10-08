@@ -42,7 +42,8 @@ __declspec(dllexport) int AutoAdjust(int minPosition,
                                      CaptureImage captureImage,
                                      int startPosition,
                                      QualityType type,
-                                     SearchStrategyType strategy) {
+                                     SearchStrategyType strategy,
+                                     int timeout) {
     float quality = -1.0;
     char msg[256] = "";
     isFocusFirstFlag = true;
@@ -74,24 +75,27 @@ __declspec(dllexport) int AutoAdjust(int minPosition,
     switch (strategy) {
     case SearchStrategyType::BISECTION:
         sprintf_s(msg, sizeof(msg) - strlen(msg), "[INFO] Using Bisection search strategy!\n");
-        optimumPosition = BisectionSearch(minPosition, maxPosition, step, captureImage, startPosition, type);
+        optimumPosition = BisectionSearch(minPosition, maxPosition, step, captureImage, startPosition, type, timeout);
         break;
     case SearchStrategyType::REFOCUS:
         sprintf_s(msg, sizeof(msg) - strlen(msg), "[INFO] Using Smart scan search strategy!\n");
-        optimumPosition = RefocusSearch(minPosition, maxPosition, step, captureImage, startPosition, type);
+        optimumPosition = RefocusSearch(minPosition, maxPosition, step, captureImage, startPosition, type, timeout);
         break;
     }
     auto endSearch = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endSearch - startSearch).count();
-    quality = QueryQuality(optimumPosition, captureImage, type);
-
-    sprintf_s(
-        msg,
-        sizeof(msg) - strlen(msg),
-        "[INFO] Duration of searching optimum focus or brightness: %lld ms\tOptimum position: %d\tQuality: %.3f\n",
-        duration,
-        optimumPosition,
-        quality);
+    if (optimumPosition > 0) {
+        quality = QueryQuality(optimumPosition, captureImage, type);
+        sprintf_s(
+            msg,
+            sizeof(msg) - strlen(msg),
+            "[INFO] Duration of searching optimum focus or brightness: %lld ms\tOptimum position: %d\tQuality: %.3f\n",
+            duration,
+            optimumPosition,
+            quality);
+    } else {
+        sprintf_s(msg, sizeof(msg) - strlen(msg), "[INFO] Timeout!\n");
+    }
     DebugPrint(msg);
     free(g_dynamicMem);
     g_dynamicMem = NULL;
@@ -113,24 +117,7 @@ __declspec(dllexport) int AutoAdjustFocus(int minPosition,
     else
         type = SearchStrategyType::REFOCUS;
 
-    if (timeout < 0) {
-        return AutoAdjust(minPosition, maxPosition, step, captureImage, startPosition, QualityType::FOCUS, type);
-    } else {
-        std::future<int> fut = std::async(std::launch::async,
-                                          AutoAdjust,
-                                          minPosition,
-                                          maxPosition,
-                                          step,
-                                          captureImage,
-                                          startPosition,
-                                          QualityType::FOCUS,
-                                          type);
-        if (fut.wait_for(std::chrono::seconds(timeout)) == std::future_status::ready) {
-            return fut.get();
-        } else {
-            throw std::exception("Timeout");
-        }
-    }
+    return AutoAdjust(minPosition, maxPosition, step, captureImage, startPosition, QualityType::FOCUS, type, timeout);
 }
 
 __declspec(dllexport) int AutoAdjustLight(int minPosition,
@@ -202,7 +189,13 @@ __declspec(dllexport) float BrightQuality(cv::Mat& image) {
     return quality;
 }
 
-int RefocusSearch(int begin, int end, int userStep, CaptureImage captureImage, int start, QualityType type) {
+int RefocusSearch(int begin,
+                  int end,
+                  int userStep,
+                  CaptureImage captureImage,
+                  int start,
+                  QualityType type,
+                  int timeout) {
     std::ostringstream result;
     int direction = 1;
     int directChangedTimes = 2;
@@ -211,6 +204,7 @@ int RefocusSearch(int begin, int end, int userStep, CaptureImage captureImage, i
 
     int pos = start;
     int previous = start;
+    auto startSearch = std::chrono::high_resolution_clock::now();
     while (pos >= begin && pos <= end) {
         if (direction > 0) {
             while ((pos + direction * userStep) <= end &&
@@ -219,6 +213,15 @@ int RefocusSearch(int begin, int end, int userStep, CaptureImage captureImage, i
                 result << "Direction: " << direction << "\t Compare: " << pos << " -> " << pos + direction * userStep
                        << std::endl;
                 pos += direction * userStep;
+                auto endSearch = std::chrono::high_resolution_clock::now();
+                auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(endSearch - startSearch).count();
+                if (timeout > 0 && elapsed > timeout) {
+                    result << "Execution Timeout" << std::endl;
+                    DebugPrint(result.str().c_str());
+                    return -1;
+                } else {
+                    result << "During Time: " << elapsed << "ms" << std::endl;
+                }
             }
         } else {
             while ((pos + direction * userStep) >= begin &&
@@ -227,6 +230,15 @@ int RefocusSearch(int begin, int end, int userStep, CaptureImage captureImage, i
                 result << "Direction: " << direction << "\t Compare: " << pos << " -> " << pos + direction * userStep
                        << std::endl;
                 pos += direction * userStep;
+                auto endSearch = std::chrono::high_resolution_clock::now();
+                auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(endSearch - startSearch).count();
+                if (timeout > 0 && elapsed > timeout) {
+                    result << "Execution Timeout" << std::endl;
+                    DebugPrint(result.str().c_str());
+                    return -1;
+                } else {
+                    result << "During Time: " << elapsed << "ms" << std::endl;
+                }
             }
         }
         if (pos == start) {
@@ -243,7 +255,13 @@ int RefocusSearch(int begin, int end, int userStep, CaptureImage captureImage, i
     return pos;
 }
 
-int BisectionSearch(int start, int end, int user_step, CaptureImage captureImage, int startPosition, QualityType type) {
+int BisectionSearch(int start,
+                    int end,
+                    int user_step,
+                    CaptureImage captureImage,
+                    int startPosition,
+                    QualityType type,
+                    int timeout) {
     if (start > end)
         return -1;
     static int step = (end - start) / 10;
@@ -271,16 +289,25 @@ int BisectionSearch(int start, int end, int user_step, CaptureImage captureImage
         }
         break;
     }
-    float midQuality = QueryQuality(mid, captureImage, type);
-    float frontQuality = QueryQuality(mid - step, captureImage, type);
-    float behindQuality = QueryQuality(mid + step, captureImage, type);
+    float midQuality = -1;
+    float frontQuality = -1;
+    float behindQuality = -1;
+    do {
+        midQuality = QueryQuality(mid, captureImage, type);
+        frontQuality = QueryQuality(mid - step, captureImage, type);
+        behindQuality = QueryQuality(mid + step, captureImage, type);
+        if (midQuality >= frontQuality && midQuality >= behindQuality)
+            break;
+        else if (midQuality < frontQuality) {
+            mid = mid - 1;
+            // return BisectionSearch(start, mid - 1, user_step, captureImage, startPosition, type);
+        } else {
+            mid = mid + 1;
+            // return BisectionSearch(mid + 1, end, user_step, captureImage, startPosition, type);
+        }
 
-    if (midQuality >= frontQuality && midQuality >= behindQuality)
-        return mid;
-    else if (midQuality < frontQuality)
-        return BisectionSearch(start, mid - 1, user_step, captureImage, startPosition, type);
-    else
-        return BisectionSearch(mid + 1, end, user_step, captureImage, startPosition, type);
+    } while (midQuality < frontQuality || midQuality < behindQuality);
+    return mid;
 }
 
 /**********
