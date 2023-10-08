@@ -4,7 +4,7 @@ This repo implements some functions to process inputting images and provides a D
 * CMake 3.13 or higher  (install CMake via the powershell CMD)  
 `winget install cmake`  
 * Microsoft Visual Studio 2022(recommended)
-* [OpenCV](https://opencv.org/releases/)
+* [OpenCV 4.7](https://github.com/opencv/opencv/releases/download/4.7.0/opencv-4.7.0-windows.exe)
 ## How to build DLL
 1. clone repo to local
 2. create build folder
