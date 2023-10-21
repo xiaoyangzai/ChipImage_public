@@ -43,6 +43,7 @@ __declspec(dllexport) void BaseFunctionTest(char* data, int length) {
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {
+    char msg[256] = "";
     switch (ul_reason_for_call) {
     case DLL_PROCESS_ATTACH:
         logFile.open(g_logFileName, std::fstream::out | std::fstream::app);
@@ -50,12 +51,14 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
             std::cerr << "Failed to open log file!" << std::endl;
             return FALSE;
         }
+        LOG(msg, "Loading image_process.dll\n");
         break;
     case DLL_THREAD_ATTACH:
         break;
     case DLL_THREAD_DETACH:
         break;
     case DLL_PROCESS_DETACH:
+        LOG(msg, "Unloading image_process.dll\n");
         if (logFile.is_open())
             logFile.close();
         break;
