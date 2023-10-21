@@ -22,17 +22,17 @@ __declspec(dllexport) int MatchTarget(char* image,
                                       char** outputImage) {
     int quality = -1;
     char msg[256] = "";
-    sprintf_s(msg, sizeof(msg) - strlen(msg), "Image length: %d\nTarget length: %d\n", imageSize, targetSize);
+    LOG(msg, "[INFO] Image length: %d\tTarget length: %d\n", imageSize, targetSize);
     matchedPosX = originalPosX;
     matchedPosY = originalPosY;
     std::string imageData = Base64Decoder(image, imageSize);
     std::vector<uchar> decodedImage(imageData.begin(), imageData.end());
     cv::Mat imageMat = imdecode(decodedImage, cv::IMREAD_COLOR);
-    sprintf_s(msg, sizeof(msg) - strlen(msg), "Image size: %d x %d\n", imageMat.rows, imageMat.cols);
+    LOG(msg, "[INFO] Image size: %d x %d\n", imageMat.rows, imageMat.cols);
     std::string targetData = Base64Decoder(target, targetSize);
     std::vector<uchar> decodedTarget(targetData.begin(), targetData.end());
     cv::Mat targetMat = imdecode(decodedTarget, cv::IMREAD_COLOR);
-    sprintf_s(msg, sizeof(msg) - strlen(msg), "Target size: %d x %d\n", targetMat.rows, targetMat.cols);
+    LOG(msg, "[INFO] Target size: %d x %d\n", targetMat.rows, targetMat.cols);
 
     cv::Mat imageGray, targetGray;
     cv::cvtColor(imageMat, imageGray, cv::COLOR_BGR2GRAY);
@@ -55,8 +55,7 @@ __declspec(dllexport) int MatchTarget(char* image,
                   5);
 
     if (!outputImage) {
-        sprintf_s(msg, sizeof(msg) - strlen(msg), "offset : %d x %d\nQuality: %d\n", matchedPosX, matchedPosY, quality);
-        DebugPrint(msg);
+        LOG(msg, "[INFO] offset : %d x %d\tQuality: %d\n", matchedPosX, matchedPosY, quality);
         return quality;
     }
     // showShow the offset of the location of matched target image and the matching quality
@@ -74,12 +73,11 @@ __declspec(dllexport) int MatchTarget(char* image,
         g_dynamicMem = (char*)malloc(MEM_MAX_SIZE * sizeof(char));
     }
     if (outputImageDate.size() >= MEM_MAX_SIZE) {
-        sprintf_s(msg + strlen(msg),
-                  sizeof(msg) - strlen(msg),
-                  "[ERROR] Destation image buffer is not large enough. Maximum buffer size is %d and Current dumped "
-                  "image size is %d.\n",
-                  MEM_MAX_SIZE,
-                  outputImageDate.size());
+        LOG(msg,
+            "[ERROR] Destation image buffer is not large enough. Maximum buffer size is %d and Current dumped "
+            "image size is %d.\n",
+            MEM_MAX_SIZE,
+            outputImageDate.size());
         return -1;
     }
 
@@ -89,13 +87,7 @@ __declspec(dllexport) int MatchTarget(char* image,
         *outputImage = g_dynamicMem;
     }
 
-    sprintf_s(msg,
-              sizeof(msg) - strlen(msg),
-              "Matched Position: %d x %d\nQuality: %d\n",
-              matchedPosX,
-              matchedPosY,
-              quality);
-    DebugPrint(msg);
+    LOG(msg, "[INFO] Matched Position: %d x %d\tQuality: %d\n", matchedPosX, matchedPosY, quality);
     return quality;
 }
 }
