@@ -15,13 +15,12 @@ extern "C" {
 __declspec(dllexport) int RotateTransform(char* image, int imageSize, double& rotate_angle) {
     char msg[256] = "";
     rotate_angle = -1000.0;
-    sprintf_s(msg + strlen(msg), sizeof(msg) - strlen(msg), "Calling RotateTransform()....\n");
+    LOG(msg, "[INFO] Calling RotateTransform()....\n");
     std::string imageData = Base64Decoder(image, imageSize);
     std::vector<uchar> decodedImage(imageData.begin(), imageData.end());
     cv::Mat srcImage = imdecode(decodedImage, cv::IMREAD_COLOR);
     if (!srcImage.data) {
-        sprintf_s(msg + strlen(msg), sizeof(msg) - strlen(msg), "Error: Failed to load image data.\n");
-        DebugPrint(msg);
+        LOG(msg, "[ERROR] Failed to load image data.\n");
         return -1;
     }
 
@@ -58,9 +57,8 @@ __declspec(dllexport) int RotateTransform(char* image, int imageSize, double& ro
     Point pt2(cvRound(x0 - 1000 * (-b)), cvRound(y0 - 1000 * (a)));
     line(srcImage, pt1, pt2, Scalar(0, 255, 255), 20, LINE_AA);
     if (rotate_angle == -1000.0) {
-        sprintf_s(msg + strlen(msg), sizeof(msg) - strlen(msg), "Failed to calculate the rotate_angle\n");
-        sprintf_s(msg + strlen(msg), sizeof(msg) - strlen(msg), "Calling RotateTransform()....Done\n");
-        DebugPrint(msg);
+        LOG(msg, "[INFO] Failed to calculate the rotate_angle\n");
+        LOG(msg, "[INFO] Calling RotateTransform()....Done\n");
         return -1;
     }
     if (rotate_angle > 45) {
@@ -68,7 +66,7 @@ __declspec(dllexport) int RotateTransform(char* image, int imageSize, double& ro
     } else if (rotate_angle < -45) {
         rotate_angle = 90 + rotate_angle;
     }
-    sprintf_s(msg + strlen(msg), sizeof(msg) - strlen(msg), "Rotate rotate_angle: %.2f\n", rotate_angle);
+    LOG(msg, "[INFO] Rotate rotate_angle: %.2f\n", rotate_angle);
 
     // Draw the square in the center of the image
     int centerX = srcImage.cols / 2;
@@ -82,8 +80,7 @@ __declspec(dllexport) int RotateTransform(char* image, int imageSize, double& ro
                   5);
     line(srcImage, Point(centerX - halfSize, centerY), Point(centerX + halfSize, centerY), Scalar(0, 255, 0), 5);
     line(srcImage, Point(centerX, centerY - halfSize), Point(centerX, centerY + halfSize), Scalar(0, 255, 0), 5);
-    sprintf_s(msg + strlen(msg), sizeof(msg) - strlen(msg), "Calling RotateTransform()....Done\n");
-    DebugPrint(msg);
+    LOG(msg, "[INFO] Calling RotateTransform()....Done\n");
     return 0;
 }
 }

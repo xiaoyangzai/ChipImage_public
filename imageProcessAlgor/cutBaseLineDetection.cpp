@@ -10,7 +10,7 @@ using namespace std;
 extern "C" {
 __declspec(dllexport) int CutLineDetection(char* image, int imageSize, int& delta_x, int& delta_y) {
     char msg[256] = "";
-    sprintf_s(msg + strlen(msg), sizeof(msg) - strlen(msg), "Calling CutLineDetection()....\n");
+    LOG(msg, "[INFO] Calling CutLineDetection()....\n");
     delta_x = -1;
     delta_y = -1;
     std::string imageData = Base64Decoder(image, imageSize);
@@ -18,8 +18,7 @@ __declspec(dllexport) int CutLineDetection(char* image, int imageSize, int& delt
     cv::Mat imageMat = imdecode(decodedImage, cv::IMREAD_COLOR);
 
     if (!imageMat.data) {
-        sprintf_s(msg + strlen(msg), sizeof(msg) - strlen(msg), "Error: Failed to load image data.\n");
-        DebugPrint(msg);
+        LOG(msg, "[INFO] Error: Failed to load image data.\n");
         return -1;
     }
 
@@ -27,9 +26,8 @@ __declspec(dllexport) int CutLineDetection(char* image, int imageSize, int& delt
 
     delta_x = 123;
     delta_y = 222;
-    sprintf_s(msg + strlen(msg), sizeof(msg) - strlen(msg), "Delta X: %d\tDelta Y: %d\n", delta_x, delta_y);
-    sprintf_s(msg + strlen(msg), sizeof(msg) - strlen(msg), "Calling MatchTarget()....Done\n");
-    DebugPrint(msg);
+    LOG(msg, "[INFO] Delta X: %d\tDelta Y: %d\n", delta_x, delta_y);
+    LOG(msg, "[INFO] Calling MatchTarget()....Done\n");
     return 0;
 }
 }
