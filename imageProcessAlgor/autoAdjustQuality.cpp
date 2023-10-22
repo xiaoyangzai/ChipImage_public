@@ -39,15 +39,18 @@ __declspec(dllexport) int AutoAdjust(int minPosition,
                                      int maxPosition,
                                      int step,
                                      CaptureImage captureImage,
+                                     float& optimumQuality,
                                      int startPosition,
                                      QualityType type,
                                      SearchStrategyType strategy,
-                                     int timeout) {
+                                     int timeout,
+                                     float refQuality) {
     float quality = -1.0;
     char msg[256] = "";
     isFocusFirstFlag = true;
     isBrightFirstFlag = true;
     LOG(msg, "[INFO] Calling AutoAdjust()....\n");
+    LOG(msg, "[INFO] Refer Quality: %.2f....\n", refQuality);
     if (captureImage == NULL) {
         LOG(msg, "[ERROR] Empty image capture handler. Please check again!\n");
         return -1;
@@ -61,7 +64,7 @@ __declspec(dllexport) int AutoAdjust(int minPosition,
         g_dynamicMem = (char*)malloc(MEM_MAX_SIZE * sizeof(char));
     int optimumPosition = -1;
     LOG(msg,
-        "[INFO] Position range: [%d, %d]. Start search poision: %d and each adjuestment step: %d\n",
+        "[INFO] Position range: [%d, %d]. Start search position: %d and each adjustment step: %d\n",
         minPosition,
         maxPosition,
         startPosition,
@@ -71,11 +74,27 @@ __declspec(dllexport) int AutoAdjust(int minPosition,
     switch (strategy) {
     case SearchStrategyType::BISECTION:
         LOG(msg, "[INFO] Using Bisection search strategy!\n");
-        optimumPosition = BisectionSearch(minPosition, maxPosition, step, captureImage, startPosition, type, timeout);
+        optimumPosition = BisectionSearch(minPosition,
+                                          maxPosition,
+                                          step,
+                                          captureImage,
+                                          optimumQuality,
+                                          startPosition,
+                                          type,
+                                          timeout,
+                                          refQuality);
         break;
     case SearchStrategyType::REFOCUS:
         LOG(msg, "[INFO] Using Smart scan search strategy!\n");
-        optimumPosition = RefocusSearch(minPosition, maxPosition, step, captureImage, startPosition, type, timeout);
+        optimumPosition = RefocusSearch(minPosition,
+                                        maxPosition,
+                                        step,
+                                        captureImage,
+                                        optimumQuality,
+                                        startPosition,
+                                        type,
+                                        timeout,
+                                        refQuality);
         break;
     }
     auto endSearch = std::chrono::high_resolution_clock::now();
@@ -102,38 +121,58 @@ __declspec(dllexport) int AutoAdjustFocus(int minPosition,
                                           int maxPosition,
                                           int step,
                                           CaptureImage captureImage,
+                                          float& optimumQuality,
                                           int startPosition,
-                                          int timeout) {
+                                          int timeout,
+                                          float refQuality) {
     SearchStrategyType type;
     if (startPosition < 0)
         type = SearchStrategyType::BISECTION;
     else
         type = SearchStrategyType::REFOCUS;
 
-    return AutoAdjust(minPosition, maxPosition, step, captureImage, startPosition, QualityType::FOCUS, type, timeout);
+    return AutoAdjust(minPosition,
+                      maxPosition,
+                      step,
+                      captureImage,
+                      optimumQuality,
+                      startPosition,
+                      QualityType::FOCUS,
+                      type,
+                      timeout,
+                      refQuality);
 }
 
 __declspec(dllexport) int AutoAdjustLight(int minPosition,
                                           int maxPosition,
                                           int step,
                                           CaptureImage captureImage,
-                                          int startPosition) {
+                                          float& optimumQuality,
+                                          int startPosition,
+                                          int timeout,
+                                          float refQuality) {
     if (startPosition < 0)
         return AutoAdjust(minPosition,
                           maxPosition,
                           step,
                           captureImage,
+                          optimumQuality,
                           startPosition,
                           QualityType::BRIGHTNESS,
-                          SearchStrategyType::BISECTION);
+                          SearchStrategyType::BISECTION,
+                          timeout,
+                          refQuality);
     else
         return AutoAdjust(minPosition,
                           maxPosition,
                           step,
                           captureImage,
+                          optimumQuality,
                           startPosition,
                           QualityType::BRIGHTNESS,
-                          SearchStrategyType::REFOCUS);
+                          SearchStrategyType::REFOCUS,
+                          timeout,
+                          refQuality);
 }
 
 __declspec(dllexport) float QueryQuality(int position, CaptureImage captureImage, QualityType type) {
@@ -185,9 +224,11 @@ int RefocusSearch(int begin,
                   int end,
                   int userStep,
                   CaptureImage captureImage,
+                  float& optimumQuality,
                   int start,
                   QualityType type,
-                  int timeout) {
+                  int timeout,
+                  float refQuality) {
     std::ostringstream result;
     int direction = 1;
     int directChangedTimes = 2;
@@ -198,15 +239,18 @@ int RefocusSearch(int begin,
     int previous = start;
     auto startSearch = std::chrono::high_resolution_clock::now();
     char msg[256] = "";
+    float currentQuality = -1.0;
     while (pos >= begin && pos <= end) {
+        auto endSearch = std::chrono::high_resolution_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(endSearch - startSearch).count();
         if (direction > 0) {
             while ((pos + direction * userStep) <= end &&
-                   QueryQuality(pos, captureImage, type) <
+                   (currentQuality = QueryQuality(pos, captureImage, type)) <
                        QueryQuality(pos + direction * userStep, captureImage, type)) {
                 LOG(msg, "[INFO] Direction: %d\t Compare: %d -> %d\n", direction, pos, pos + direction * userStep);
+                if (refQuality >= 0 && currentQuality >= refQuality)
+                    break;
                 pos += direction * userStep;
-                auto endSearch = std::chrono::high_resolution_clock::now();
-                auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(endSearch - startSearch).count();
                 if (timeout > 0 && elapsed > timeout) {
                     LOG(msg, "[INFO] Execution Timeout\n");
                     return -1;
@@ -216,20 +260,23 @@ int RefocusSearch(int begin,
             }
         } else {
             while ((pos + direction * userStep) >= begin &&
-                   QueryQuality(pos, captureImage, type) <
+                   (currentQuality = QueryQuality(pos, captureImage, type)) <
                        QueryQuality(pos + direction * userStep, captureImage, type)) {
                 LOG(msg, "[INFO] Direction: %d\t Compare: %d -> %d\n", direction, pos, pos + direction * userStep);
+                if (refQuality >= 0 && currentQuality >= refQuality)
+                    break;
                 pos += direction * userStep;
-                auto endSearch = std::chrono::high_resolution_clock::now();
-                auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(endSearch - startSearch).count();
                 if (timeout > 0 && elapsed > timeout) {
                     LOG(msg, "[INFO] Execution Timeout\n");
                     return -1;
                 } else {
-                    LOG(msg, "[INFO] During Time: %ld ms\n", elapsed);
+                    LOG(msg, "[INFO] During time of RefocusSearch: %ld ms\n", elapsed);
                 }
             }
         }
+        LOG(msg, "[INFO] Current quality: %.2f\tRefer quality: %.2f\n", currentQuality, refQuality);
+        if (refQuality >= 0 && currentQuality >= refQuality)
+            break;
         if (pos == start) {
             LOG(msg, "[INFO] Change direction %d ->", direction);
             direction *= -1;
@@ -240,6 +287,7 @@ int RefocusSearch(int begin,
         }
         break;
     }
+    optimumQuality = currentQuality;
     return pos;
 }
 
@@ -247,9 +295,12 @@ int BisectionSearch(int start,
                     int end,
                     int user_step,
                     CaptureImage captureImage,
+                    float& optimumQuality,
                     int startPosition,
                     QualityType type,
-                    int timeout) {
+                    int timeout,
+                    float refQuality) {
+    optimumQuality = -1.0;
     if (start > end)
         return -1;
     static int step = (end - start) / 10;
@@ -280,8 +331,25 @@ int BisectionSearch(int start,
     float midQuality = -1;
     float frontQuality = -1;
     float behindQuality = -1;
+    auto startSearch = std::chrono::high_resolution_clock::now();
+    char msg[256] = "";
     do {
+        auto endSearch = std::chrono::high_resolution_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(endSearch - startSearch).count();
+        if (timeout > 0 && elapsed > timeout) {
+            LOG(msg, "[INFO] Execution Timeout\n");
+            return -1;
+        } else {
+            LOG(msg, "[INFO] During time of BisectionSearch: %ld ms\n", elapsed);
+        }
         midQuality = QueryQuality(mid, captureImage, type);
+        if (refQuality >= 0 && midQuality >= refQuality) {
+            LOG(msg,
+                "[INFO] Current quality[%.2f] is better than passed refer optimum quality[%.2f]:\n",
+                midQuality,
+                refQuality);
+            break;
+        }
         frontQuality = QueryQuality(mid - step, captureImage, type);
         behindQuality = QueryQuality(mid + step, captureImage, type);
         if (midQuality >= frontQuality && midQuality >= behindQuality)
@@ -295,6 +363,7 @@ int BisectionSearch(int start,
         }
 
     } while (midQuality < frontQuality || midQuality < behindQuality);
+    optimumQuality = midQuality;
     return mid;
 }
 
