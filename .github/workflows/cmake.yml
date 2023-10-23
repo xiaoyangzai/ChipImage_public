@@ -46,18 +46,15 @@ jobs:
 
       - name: Configure CMake
         run: |
-          cd $GITHUB_WORKSPACE
           mkdir build
           cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DOpenCV_DIR=C:\opencv\opencv-4.5.5\build -B build
 
       - name: Build ChipImageAlgr
         run: |
-          cd $GITHUB_WORKSPACE
           cmake --build build --config Release
 
       - name: Packaging ChipImageAlgr
         run: |
-          cd $GITHUB_WORKSPACE
           ls -l .
           ls -l C:\opencv\opencv-4.5.5\build\bin\*.dll
           ls -l C:\opencv\opencv-4.5.5\build\x64\vc16\bin\*dll
