@@ -3,6 +3,7 @@
 
 #include <iostream>
 extern "C" {
+__declspec(dllexport) int MatchTargetMat(cv::Mat& imageMat, cv::Mat& targetMat);
 /**
  * @brief Search target from source image and return the location of the matched target image.
  * @param image 		source image data buffer encoded with Base64
@@ -25,4 +26,12 @@ __declspec(dllexport) int MatchTarget(char* image,
                                       int& matechedPosX,
                                       int& matchedPosY,
                                       char** outputImage);
+
+/***
+ * @brief check if the provided target template image is valid.
+ * @param imageMat 		source image data buffer encoded with cv::Mat 
+ * @param targetMat 	target image data buffer encoded with cv::Mat 
+ * @return return 0 if target template image is unique. Otherwise, return -1.
+ */
+__declspec(dllexport) int IsUniqueTarget(cv::Mat& imageMat, cv::Mat& targetMat);
 }
