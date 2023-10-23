@@ -56,13 +56,11 @@ jobs:
       - name: Packaging ChipImageAlgr
         run: |
           ls -l .
-          ls -l C:\opencv\opencv-4.5.5\build\bin\*.dll
-          ls -l C:\opencv\opencv-4.5.5\build\x64\vc16\bin\*dll
-          tar -zcvf image_process.tar.gz bin/ C:\opencv\opencv-4.5.5\build\bin\*.dll C:\opencv\opencv-4.5.5\build\x64\vc16\bin\*dll
-          ls -l .
+          ls -l bin
+          tar -zcvf image_process.tar.gz bin
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
           name: image_process
-          path: $GITHUB_WORKSPACE/image_process.tar.gz
+          path: image_process.tar.gz
