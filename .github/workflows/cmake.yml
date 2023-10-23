@@ -50,3 +50,11 @@ jobs:
       - name: Build ChipImageAlgr
         run: cmake --build build --config Release
 
+      - name: Packaging ChipImageAlgr
+        run: tar -zcvf image_process.tar.gz bin/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: image_process
+          path: image_process.tar.gz
