@@ -4,16 +4,16 @@
 #pragma once
 
 #include <iostream>
-#define LOG(msgbuffer, log, ...)                                                                           \
-    do {                                                                                                   \
-        char timeStr[100] = "";                                                                            \
-        time_t t = std::time(nullptr);                                                                     \
-        struct tm localTime;                                                                               \
-        localtime_s(&localTime, &t);                                                                       \
-        std::strftime(timeStr, sizeof(timeStr), "[%Y-%m-%d %H:%M:%S] ", &localTime);                       \
-        sprintf_s(msgbuffer, sizeof(msgbuffer) - strlen(msgbuffer), "%s", timeStr);                        \
-        sprintf_s(msgbuffer + strlen(msgbuffer), sizeof(msgbuffer) - strlen(msgbuffer), log, __VA_ARGS__); \
-        DebugPrint(msgbuffer);                                                                             \
+#define LOG(msgbuffer, log, ...)                                                                             \
+    do {                                                                                                     \
+        char timeStr[100] = "";                                                                              \
+        time_t t = std::time(nullptr);                                                                       \
+        struct tm localTime;                                                                                 \
+        localtime_s(&localTime, &t);                                                                         \
+        std::strftime(timeStr, sizeof(timeStr), "[%Y-%m-%d %H:%M:%S] ", &localTime);                         \
+        sprintf_s(msgbuffer, sizeof(msgbuffer) - strlen(msgbuffer), "%s", timeStr);                          \
+        sprintf_s(msgbuffer + strlen(msgbuffer), sizeof(msgbuffer) - strlen(msgbuffer), log, ##__VA_ARGS__); \
+        DebugPrint(msgbuffer);                                                                               \
     } while (0)
 
 extern "C" {

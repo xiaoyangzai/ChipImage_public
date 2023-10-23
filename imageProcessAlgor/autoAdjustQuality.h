@@ -9,6 +9,15 @@ enum QualityType { FOCUS, BRIGHTNESS };
 enum SearchStrategyType { BISECTION, REFOCUS };
 typedef int (*CaptureImage)(char*, int&, int);
 
+__declspec(dllexport) void CancelAutoAdjust(QualityType type = QualityType::FOCUS);
+
+__declspec(dllexport) void CancelAutoAdjustFocus() {
+    return CancelAutoAdjust(QualityType::FOCUS);
+}
+__declspec(dllexport) void CancelAutoAdjustBright() {
+    return CancelAutoAdjust(QualityType::BRIGHTNESS);
+}
+
 /**
  * @brief Search target from source image and return the location of the matched target image.
  * @param image 		source image data buffer encoded with Base64

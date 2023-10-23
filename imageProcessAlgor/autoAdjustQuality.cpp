@@ -5,6 +5,7 @@
 #include <chrono>
 #include <future>
 #include <stdio.h>
+#include <mutex>
 #include "cutImageAlgr.h"
 #include "autoAdjustQuality.h"
 using namespace cv;
@@ -13,8 +14,22 @@ using namespace std;
 static char* g_dynamicMem = NULL;
 static bool isFocusFirstFlag = true;
 static bool isBrightFirstFlag = true;
+static bool isCancelAutoFocus = false;
+static bool isCancelAutoBright = false;
+static std::mutex cancelMutex;
 
 extern "C" {
+
+__declspec(dllexport) void CancelAutoAdjust(QualityType type) {
+    std::lock_guard<std::mutex> lock(mutex);
+    char msg[256] = "";
+    LOG(msg, "[INFO] Canceling Auto adjustment....\n");
+    if (type == QualityType::FOCUS)
+        isCancelAutoFocus = true;
+    if (type == QualityType::BRIGHTNESS)
+        isCancelAutoBright = true;
+    LOG(msg, "[INFO] Canceling Auto adjustment....Done\n");
+}
 
 __declspec(dllexport) float ImageQuality(char* image, int imageSize, QualityType type) {
     char msg[256] = "";
@@ -187,7 +202,7 @@ __declspec(dllexport) float QueryQuality(int position, CaptureImage captureImage
     auto endSearch = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endSearch - startSearch).count();
     char msg[256] = "";
-    LOG(msg, "[INFO] Duration of calling CaptureImage(): %ld ms\n", duration);
+    LOG(msg, "[INFO] Duration of calling CaptureImage(): %lld ms\n", duration);
     std::string imageData = Base64Decoder(g_dynamicMem, length);
     std::vector<uchar> decodedImage(imageData.begin(), imageData.end());
     cv::Mat imageMat = imdecode(decodedImage, cv::IMREAD_COLOR);
@@ -198,7 +213,7 @@ __declspec(dllexport) float QueryQuality(int position, CaptureImage captureImage
         quality = BrightQuality(imageMat);
     auto endCalling = std::chrono::high_resolution_clock::now();
     duration = std::chrono::duration_cast<std::chrono::milliseconds>(endCalling - startSearch).count();
-    LOG(msg, "[INFO] Duration of calling QueryQuality(): %ld ms\n", duration);
+    LOG(msg, "[INFO] Duration of calling QueryQuality(): %lld ms\n", duration);
     return quality;
 }
 
@@ -254,9 +269,16 @@ int RefocusSearch(int begin,
                 if (timeout > 0 && elapsed > timeout) {
                     LOG(msg, "[INFO] Execution Timeout\n");
                     return -1;
-                } else {
-                    LOG(msg, "[INFO] During Time: %ld ms\n", elapsed);
                 }
+                {
+                    std::lock_guard<std::mutex> lock(cancelMutex);
+                    if (isCancelAutoFocus) {
+                        isCancelAutoFocus = false;
+                        LOG(msg, "[INFO] Cancel Execution\n");
+                        return pos;
+                    }
+                }
+                LOG(msg, "[INFO] During Time: %lld ms\n", elapsed);
             }
         } else {
             while ((pos + direction * userStep) >= begin &&
@@ -272,6 +294,15 @@ int RefocusSearch(int begin,
                 } else {
                     LOG(msg, "[INFO] During time of RefocusSearch: %ld ms\n", elapsed);
                 }
+                {
+                    std::lock_guard<std::mutex> lock(cancelMutex);
+                    if (isCancelAutoFocus) {
+                        isCancelAutoFocus = false;
+                        LOG(msg, "[INFO] Cancel Execution\n");
+                        return pos;
+                    }
+                }
+                LOG(msg, "[INFO] During Time: %lld ms\n", elapsed);
             }
         }
         LOG(msg, "[INFO] Current quality: %.2f\tRefer quality: %.2f\n", currentQuality, refQuality);
