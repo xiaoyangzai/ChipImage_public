@@ -29,6 +29,7 @@ __declspec(dllexport) void DebugPrint(const char* message) {
     }
     std::cout << message;
     logFile << message;
+    logFile.flush();
 }
 
 // Basic function test. Just check if the debug informate output works well.
