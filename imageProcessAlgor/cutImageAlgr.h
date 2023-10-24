@@ -6,7 +6,7 @@
 #include <iostream>
 #define LOG(log, ...)                                                                                        \
     do {                                                                                                     \
-        char msgbuffer[256] = "";                                                                            \
+        char msgbuffer[2048] = "";                                                                           \
         time_t t = std::time(nullptr);                                                                       \
         struct tm localTime;                                                                                 \
         localtime_s(&localTime, &t);                                                                         \

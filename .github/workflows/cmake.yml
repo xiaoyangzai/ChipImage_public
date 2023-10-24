@@ -47,7 +47,7 @@ jobs:
       - name: Configure CMake
         run: |
           mkdir build
-          cmake -G "Visual Studio 17 2022" -DCMAKE_BUILD_TYPE=Release -DOpenCV_DIR=C:\opencv\opencv-4.5.5\build -B build
+          cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DOpenCV_DIR=C:\opencv\opencv-4.5.5\build -B build
 
       - name: Build ChipImageAlgr
         run: |

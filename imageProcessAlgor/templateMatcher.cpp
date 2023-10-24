@@ -26,14 +26,7 @@ __declspec(dllexport) int MatchTargetMat(cv::Mat& imageMat, cv::Mat& targetMat) 
     auto quality = static_cast<int>(maxVal * 100);
 
     // Draw the box for the searched target image
-    cv::rectangle(imageMat,
-                  maxLoc,
-                  Point(matchedPosX + targetMat.cols, matchedPosY + targetMat.rows),
-                  Scalar(0, 255, 0),
-                  5);
     // showShow the offset of the location of matched target image and the matching quality
-    string text = "Q=" + to_string(quality);
-    putText(imageMat, text, Point(20, 80), FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 5);
     return quality;
 }
 // Template matcher
