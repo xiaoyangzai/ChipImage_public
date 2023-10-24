@@ -11,6 +11,7 @@ extern "C" {
  * @param offsetOnX		offset on X dim compared to template image X before moving
  * @param offsetOnY		offset on Y dim compared to template image Y before moving
  * @param outputImage 	point to the output image buffer
+ * @param fontSize      the text font size. Default is 5
  * @return 				matched quality if successful, otherwise non-zero will return.
  */
 __declspec(dllexport) int PixelSizeMeasure(char* postImage,
@@ -19,5 +20,6 @@ __declspec(dllexport) int PixelSizeMeasure(char* postImage,
                                            int tempImageSize,
                                            int& offsetOnX,
                                            int& offsetOnY,
-                                           char** outputImage);
+                                           char** outputImage,
+                                           uint16_t fontSize = 5);
 }

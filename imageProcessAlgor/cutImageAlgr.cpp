@@ -34,9 +34,7 @@ __declspec(dllexport) void DebugPrint(const char* message) {
 
 // Basic function test. Just check if the debug informate output works well.
 __declspec(dllexport) void BaseFunctionTest(char* data, int length) {
-    char msg[2048] = "";
-    LOG(msg,
-        "Function Name:\n\tBaseFunctionTest\nBrief:\n\tPrint the debug msg to check if Debug callback works\n"
+    LOG("Function Name:\n\tBaseFunctionTest\nBrief:\n\tPrint the debug msg to check if Debug callback works\n"
         "Parameters:\n\tdata, char*, Pointer. point to the data buffer;\n\tlength, int, length of the data;\n"
         "Return:\n\tvoid\n Argument:\n\tdata = %s\n\tlength = %d\n",
         data,
@@ -44,7 +42,6 @@ __declspec(dllexport) void BaseFunctionTest(char* data, int length) {
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {
-    char msg[256] = "";
     switch (ul_reason_for_call) {
     case DLL_PROCESS_ATTACH:
         logFile.open(g_logFileName, std::fstream::out | std::fstream::app);
@@ -52,14 +49,14 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
             std::cerr << "Failed to open log file!" << std::endl;
             return FALSE;
         }
-        LOG(msg, "Loading image_process.dll\n");
+        LOG("Loading image_process.dll\n");
         break;
     case DLL_THREAD_ATTACH:
         break;
     case DLL_THREAD_DETACH:
         break;
     case DLL_PROCESS_DETACH:
-        LOG(msg, "Unloading image_process.dll\n");
+        LOG("Unloading image_process.dll\n");
         if (logFile.is_open())
             logFile.close();
         break;
@@ -70,7 +67,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 }
 
 __declspec(dllexport) std::string Base64Encoder(char* data, int length) {
-    char msg[2048] = "";
     std::string source(data, length);
     DWORD binarySize = static_cast<DWORD>(length);
     LPBYTE pbBinary = reinterpret_cast<LPBYTE>(data);
@@ -83,19 +79,17 @@ __declspec(dllexport) std::string Base64Encoder(char* data, int length) {
     std::string encodedData(stringSize, '\0');
 
     if (!CryptBinaryToString(pbBinary, binarySize, dwFlags, const_cast<LPTSTR>(encodedData.data()), &stringSize)) {
-        LOG(msg,
-            "Function Name:\n\tBase64Encoder\nBrief:\n\tEncode the input string with Base64.\n"
+        LOG("Function Name:\n\tBase64Encoder\nBrief:\n\tEncode the input string with Base64.\n"
             "Parameters:\n\tdata, char*, Pointer. point to the source data;\n\tlength, int, length of the data;\n"
             "Return:\n\tvoid\n Argument:\n\tdata = %p\n\tlength = %d\n",
             data,
             length);
-        LOG(msg, "Encoded result: Failed to decode Base64 data. \nError code: %ld\n", GetLastError());
+        LOG("Encoded result: Failed to decode Base64 data. \nError code: %ld\n", GetLastError());
     }
     return encodedData;
 }
 
 __declspec(dllexport) std::string Base64Decoder(char* data, int length) {
-    char msg[2048] = "";
     // Base64 encoded data
     std::string source(data, length);
     DWORD dwFlags = CRYPT_STRING_BASE64;
@@ -112,13 +106,12 @@ __declspec(dllexport) std::string Base64Decoder(char* data, int length) {
                              &binarySize,
                              nullptr,
                              nullptr)) {
-        LOG(msg,
-            "Function Name:\n\tBase64Decoder\nBrief:\n\tDecode the input string with Base64.\n"
+        LOG("Function Name:\n\tBase64Decoder\nBrief:\n\tDecode the input string with Base64.\n"
             "Parameters:\n\tdata, char*, Pointer. point to the encoded data;\n\tlength, int, length of the data;\n"
             "Return:\n\tvoid\n Argument:\n\tdata = %p\n\tlength = %d\n",
             data,
             length);
-        LOG(msg, "Decoded result: Failed to decode Base64 data. \nError code: %ld\n", GetLastError());
+        LOG("Decoded result: Failed to decode Base64 data. \nError code: %ld\n", GetLastError());
     }
     return binaryData;
 }

@@ -4,14 +4,13 @@
 #pragma once
 
 #include <iostream>
-#define LOG(msgbuffer, log, ...)                                                                             \
+#define LOG(log, ...)                                                                                        \
     do {                                                                                                     \
-        char timeStr[100] = "";                                                                              \
+        char msgbuffer[256] = "";                                                                            \
         time_t t = std::time(nullptr);                                                                       \
         struct tm localTime;                                                                                 \
         localtime_s(&localTime, &t);                                                                         \
-        std::strftime(timeStr, sizeof(timeStr), "[%Y-%m-%d %H:%M:%S] ", &localTime);                         \
-        sprintf_s(msgbuffer, sizeof(msgbuffer) - strlen(msgbuffer), "%s", timeStr);                          \
+        std::strftime(msgbuffer, sizeof(msgbuffer), "[%Y-%m-%d %H:%M:%S] ", &localTime);                     \
         sprintf_s(msgbuffer + strlen(msgbuffer), sizeof(msgbuffer) - strlen(msgbuffer), log, ##__VA_ARGS__); \
         DebugPrint(msgbuffer);                                                                               \
     } while (0)

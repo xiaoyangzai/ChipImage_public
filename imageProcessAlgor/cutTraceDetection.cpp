@@ -17,14 +17,13 @@ __declspec(dllexport) int CutTraceDetection(char* image,
                                             int& tranceWidth,
                                             int& maxTraceWidth,
                                             int& maxArea) {
-    char msg[256] = "";
-    LOG(msg, "Calling CutTraceDetection()....\n");
+    LOG("Calling CutTraceDetection()....\n");
     std::string imageData = Base64Decoder(image, imageSize);
     std::vector<uchar> decodedImage(imageData.begin(), imageData.end());
     cv::Mat imageMat = imdecode(decodedImage, cv::IMREAD_COLOR);
 
     if (!imageMat.data) {
-        LOG(msg, "Error: Failed to load image data.\n");
+        LOG("Error: Failed to load image data.\n");
         return -1;
     }
 
@@ -34,12 +33,12 @@ __declspec(dllexport) int CutTraceDetection(char* image,
     tranceWidth = 20;
     maxTraceWidth = 23;
     maxArea = 123;
-    LOG(msg, "Trace angle with baseline: %.2f\n", traceAngle);
-    LOG(msg, "Trace center offset with baseline: %d\n", traceCenterOffset);
-    LOG(msg, "Trace width: %d\n", tranceWidth);
-    LOG(msg, "Maximum Trace width: %d\n", maxTraceWidth);
-    LOG(msg, "Maximum curved area: %d\n", maxArea);
-    LOG(msg, "Calling CutTraceDetection()....Done\n");
+    LOG("Trace angle with baseline: %.2f\n", traceAngle);
+    LOG("Trace center offset with baseline: %d\n", traceCenterOffset);
+    LOG("Trace width: %d\n", tranceWidth);
+    LOG("Maximum Trace width: %d\n", maxTraceWidth);
+    LOG("Maximum curved area: %d\n", maxArea);
+    LOG("Calling CutTraceDetection()....Done\n");
     return 0;
 }
 }

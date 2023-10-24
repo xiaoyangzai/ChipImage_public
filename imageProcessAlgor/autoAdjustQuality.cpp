@@ -22,24 +22,22 @@ extern "C" {
 
 __declspec(dllexport) void CancelAutoAdjust(QualityType type) {
     std::lock_guard<std::mutex> lock(mutex);
-    char msg[256] = "";
-    LOG(msg, "[INFO] Canceling Auto adjustment....\n");
+    LOG("[INFO] Canceling Auto adjustment....\n");
     if (type == QualityType::FOCUS)
         isCancelAutoFocus = true;
     if (type == QualityType::BRIGHTNESS)
         isCancelAutoBright = true;
-    LOG(msg, "[INFO] Canceling Auto adjustment....Done\n");
+    LOG("[INFO] Canceling Auto adjustment....Done\n");
 }
 
 __declspec(dllexport) float ImageQuality(char* image, int imageSize, QualityType type) {
-    char msg[256] = "";
-    LOG(msg, "[INFO] Calling ImageQuality()....\n");
+    LOG("[INFO] Calling ImageQuality()....\n");
     float quality = -1.0;
     std::string imageData = Base64Decoder(image, imageSize);
     std::vector<uchar> decodedImage(imageData.begin(), imageData.end());
     cv::Mat srcImage = imdecode(decodedImage, cv::IMREAD_COLOR);
     if (!srcImage.data) {
-        LOG(msg, "[ERROR] Failed to load image data.\n");
+        LOG("[ERROR] Failed to load image data.\n");
         return -1;
     }
     if (type == QualityType::FOCUS)
@@ -47,7 +45,7 @@ __declspec(dllexport) float ImageQuality(char* image, int imageSize, QualityType
     if (type == QualityType::BRIGHTNESS)
         quality = BrightQuality(srcImage);
 
-    LOG(msg, "[INFO] Quality: %.3f\n", quality);
+    LOG("[INFO] Quality: %.3f\n", quality);
     return quality;
 }
 __declspec(dllexport) int AutoAdjust(int minPosition,
@@ -61,25 +59,23 @@ __declspec(dllexport) int AutoAdjust(int minPosition,
                                      int timeout,
                                      float refQuality) {
     float quality = -1.0;
-    char msg[256] = "";
     isFocusFirstFlag = true;
     isBrightFirstFlag = true;
-    LOG(msg, "[INFO] Calling AutoAdjust()....\n");
-    LOG(msg, "[INFO] Refer Quality: %.2f....\n", refQuality);
+    LOG("[INFO] Calling AutoAdjust()....\n");
+    LOG("[INFO] Refer Quality: %.2f....\n", refQuality);
     if (captureImage == NULL) {
-        LOG(msg, "[ERROR] Empty image capture handler. Please check again!\n");
+        LOG("[ERROR] Empty image capture handler. Please check again!\n");
         return -1;
     }
     if (minPosition > maxPosition ||
         (startPosition > 0 && (startPosition < minPosition || startPosition > maxPosition))) {
-        LOG(msg, "[ERROR] Bad focus position. Please check again!\n");
+        LOG("[ERROR] Bad focus position. Please check again!\n");
         return -1;
     }
     if (!g_dynamicMem)
         g_dynamicMem = (char*)malloc(MEM_MAX_SIZE * sizeof(char));
     int optimumPosition = -1;
-    LOG(msg,
-        "[INFO] Position range: [%d, %d]. Start search position: %d and each adjustment step: %d\n",
+    LOG("[INFO] Position range: [%d, %d]. Start search position: %d and each adjustment step: %d\n",
         minPosition,
         maxPosition,
         startPosition,
@@ -88,7 +84,7 @@ __declspec(dllexport) int AutoAdjust(int minPosition,
     auto startSearch = std::chrono::high_resolution_clock::now();
     switch (strategy) {
     case SearchStrategyType::BISECTION:
-        LOG(msg, "[INFO] Using Bisection search strategy!\n");
+        LOG("[INFO] Using Bisection search strategy!\n");
         optimumPosition = BisectionSearch(minPosition,
                                           maxPosition,
                                           step,
@@ -100,7 +96,7 @@ __declspec(dllexport) int AutoAdjust(int minPosition,
                                           refQuality);
         break;
     case SearchStrategyType::REFOCUS:
-        LOG(msg, "[INFO] Using Smart scan search strategy!\n");
+        LOG("[INFO] Using Smart scan search strategy!\n");
         optimumPosition = RefocusSearch(minPosition,
                                         maxPosition,
                                         step,
@@ -116,17 +112,16 @@ __declspec(dllexport) int AutoAdjust(int minPosition,
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endSearch - startSearch).count();
     if (optimumPosition > 0) {
         quality = QueryQuality(optimumPosition, captureImage, type);
-        LOG(msg,
-            "[INFO] Duration of searching optimum focus or brightness: %lld ms\tOptimum position: %d\tQuality: %.3f\n",
+        LOG("[INFO] Duration of searching optimum focus or brightness: %lld ms\tOptimum position: %d\tQuality: %.3f\n",
             duration,
             optimumPosition,
             quality);
     } else {
-        LOG(msg, "[INFO] Execution Timeout!\n");
+        LOG("[INFO] Execution Timeout!\n");
     }
     free(g_dynamicMem);
     g_dynamicMem = NULL;
-    LOG(msg, "[INFO] Calling AutoAdjust()....Done\n");
+    LOG("[INFO] Calling AutoAdjust()....Done\n");
     isFocusFirstFlag = true;
     isBrightFirstFlag = true;
     return optimumPosition;
@@ -201,8 +196,7 @@ __declspec(dllexport) float QueryQuality(int position, CaptureImage captureImage
         return -1.0;
     auto endSearch = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endSearch - startSearch).count();
-    char msg[256] = "";
-    LOG(msg, "[INFO] Duration of calling CaptureImage(): %lld ms\n", duration);
+    LOG("[INFO] Duration of calling CaptureImage(): %lld ms\n", duration);
     std::string imageData = Base64Decoder(g_dynamicMem, length);
     std::vector<uchar> decodedImage(imageData.begin(), imageData.end());
     cv::Mat imageMat = imdecode(decodedImage, cv::IMREAD_COLOR);
@@ -213,7 +207,7 @@ __declspec(dllexport) float QueryQuality(int position, CaptureImage captureImage
         quality = BrightQuality(imageMat);
     auto endCalling = std::chrono::high_resolution_clock::now();
     duration = std::chrono::duration_cast<std::chrono::milliseconds>(endCalling - startSearch).count();
-    LOG(msg, "[INFO] Duration of calling QueryQuality(): %lld ms\n", duration);
+    LOG("[INFO] Duration of calling QueryQuality(): %lld ms\n", duration);
     return quality;
 }
 
@@ -221,8 +215,7 @@ __declspec(dllexport) float FocusQuality(cv::Mat& image) {
     float quality = -1.0;
     // TODO: calculate the image quality based with the current focus setting
     quality = StatSharpnessTenengrad(image);
-    char msg[256] = "";
-    LOG(msg, "[INFO] Image focus quality: %.2f \n", quality);
+    LOG("[INFO] Image focus quality: %.2f \n", quality);
     return quality;
 }
 
@@ -230,8 +223,7 @@ __declspec(dllexport) float BrightQuality(cv::Mat& image) {
     float quality = -1.0;
     // TODO: calculate the image quality based with the current focus setting
     quality = 255 - abs(StatBrightnessRMS(image) - 150);
-    char msg[256] = "";
-    LOG(msg, "[INFO] Image brightness quality: %.2f\n", quality);
+    LOG("[INFO] Image brightness quality: %.2f\n", quality);
     return quality;
 }
 
@@ -253,7 +245,6 @@ int RefocusSearch(int begin,
     int pos = start;
     int previous = start;
     auto startSearch = std::chrono::high_resolution_clock::now();
-    char msg[256] = "";
     float currentQuality = -1.0;
     while (pos >= begin && pos <= end) {
         auto endSearch = std::chrono::high_resolution_clock::now();
@@ -262,54 +253,54 @@ int RefocusSearch(int begin,
             while ((pos + direction * userStep) <= end &&
                    (currentQuality = QueryQuality(pos, captureImage, type)) <
                        QueryQuality(pos + direction * userStep, captureImage, type)) {
-                LOG(msg, "[INFO] Direction: %d\t Compare: %d -> %d\n", direction, pos, pos + direction * userStep);
+                LOG("[INFO] Direction: %d\t Compare: %d -> %d\n", direction, pos, pos + direction * userStep);
                 if (refQuality >= 0 && currentQuality >= refQuality)
                     break;
                 pos += direction * userStep;
                 if (timeout > 0 && elapsed > timeout) {
-                    LOG(msg, "[INFO] Execution Timeout\n");
+                    LOG("[INFO] Execution Timeout\n");
                     return -1;
                 }
                 {
                     std::lock_guard<std::mutex> lock(cancelMutex);
                     if (isCancelAutoFocus) {
                         isCancelAutoFocus = false;
-                        LOG(msg, "[INFO] Cancel Execution\n");
+                        LOG("[INFO] Cancel Execution\n");
                         return pos;
                     }
                 }
-                LOG(msg, "[INFO] During Time: %lld ms\n", elapsed);
+                LOG("[INFO] During Time: %lld ms\n", elapsed);
             }
         } else {
             while ((pos + direction * userStep) >= begin &&
                    (currentQuality = QueryQuality(pos, captureImage, type)) <
                        QueryQuality(pos + direction * userStep, captureImage, type)) {
-                LOG(msg, "[INFO] Direction: %d\t Compare: %d -> %d\n", direction, pos, pos + direction * userStep);
+                LOG("[INFO] Direction: %d\t Compare: %d -> %d\n", direction, pos, pos + direction * userStep);
                 if (refQuality >= 0 && currentQuality >= refQuality)
                     break;
                 pos += direction * userStep;
                 if (timeout > 0 && elapsed > timeout) {
-                    LOG(msg, "[INFO] Execution Timeout\n");
+                    LOG("[INFO] Execution Timeout\n");
                     return -1;
                 } else {
-                    LOG(msg, "[INFO] During time of RefocusSearch: %ld ms\n", elapsed);
+                    LOG("[INFO] During time of RefocusSearch: %ld ms\n", elapsed);
                 }
                 {
                     std::lock_guard<std::mutex> lock(cancelMutex);
                     if (isCancelAutoFocus) {
                         isCancelAutoFocus = false;
-                        LOG(msg, "[INFO] Cancel Execution\n");
+                        LOG("[INFO] Cancel Execution\n");
                         return pos;
                     }
                 }
-                LOG(msg, "[INFO] During Time: %lld ms\n", elapsed);
+                LOG("[INFO] During Time: %lld ms\n", elapsed);
             }
         }
-        LOG(msg, "[INFO] Current quality: %.2f\tRefer quality: %.2f\n", currentQuality, refQuality);
+        LOG("[INFO] Current quality: %.2f\tRefer quality: %.2f\n", currentQuality, refQuality);
         if (refQuality >= 0 && currentQuality >= refQuality)
             break;
         if (pos == start) {
-            LOG(msg, "[INFO] Change direction %d ->", direction);
+            LOG("[INFO] Change direction %d ->", direction);
             direction *= -1;
             std::cout << direction << std::endl;
             if (--directChangedTimes == 0)
@@ -363,20 +354,18 @@ int BisectionSearch(int start,
     float frontQuality = -1;
     float behindQuality = -1;
     auto startSearch = std::chrono::high_resolution_clock::now();
-    char msg[256] = "";
     do {
         auto endSearch = std::chrono::high_resolution_clock::now();
         auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(endSearch - startSearch).count();
         if (timeout > 0 && elapsed > timeout) {
-            LOG(msg, "[INFO] Execution Timeout\n");
+            LOG("[INFO] Execution Timeout\n");
             return -1;
         } else {
-            LOG(msg, "[INFO] During time of BisectionSearch: %ld ms\n", elapsed);
+            LOG("[INFO] During time of BisectionSearch: %ld ms\n", elapsed);
         }
         midQuality = QueryQuality(mid, captureImage, type);
         if (refQuality >= 0 && midQuality >= refQuality) {
-            LOG(msg,
-                "[INFO] Current quality[%.2f] is better than passed refer optimum quality[%.2f]:\n",
+            LOG("[INFO] Current quality[%.2f] is better than passed refer optimum quality[%.2f]:\n",
                 midQuality,
                 refQuality);
             break;
