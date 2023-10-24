@@ -45,8 +45,22 @@ jobs:
           cmake --build . --config Release
 
       - name: Configure CMake
-        run: cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DOpenCV_DIR=C:\opencv\opencv-4.5.5\build -B build
+        run: |
+          mkdir build
+          cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DOpenCV_DIR=C:\opencv\opencv-4.5.5\build -B build
 
       - name: Build ChipImageAlgr
-        run: cmake --build build --config Release
+        run: |
+          cmake --build build --config Release
 
+      - name: Packaging ChipImageAlgr
+        run: |
+          ls -l .
+          ls -l bin
+          tar -zcvf image_process.tar.gz bin
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: image_process
+          path: image_process.tar.gz
