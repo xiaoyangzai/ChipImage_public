@@ -36,8 +36,6 @@ endif()
 
 # TODO: Add tests and install targets if needed.
 add_custom_command(TARGET image_process POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:image_process> ${PROJECT_SOURCE_DIR}/bin/
-    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/image.jpg ${PROJECT_SOURCE_DIR}/bin/
-    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/target.jpg ${PROJECT_SOURCE_DIR}/bin/)
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:image_process> ${PROJECT_SOURCE_DIR}/bin/)
 
 add_custom_target(CopyFiles ALL DEPENDS unit_test image_process)

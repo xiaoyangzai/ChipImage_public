@@ -17,6 +17,7 @@ using namespace cv;
 void test_base64_text();
 void test_base64_image_show(std::string path);
 void test_base64_image_matcher(std::string image, std::string target);
+void test_unique_target_image(std::string image, std::string target);
 void test_base64_image_rotate_transform(std::string image);
 void test_image_pixel_size_measure(std::string image, std::string target);
 void test_cut_baseline_detection(std::string image);
@@ -24,6 +25,10 @@ void test_cut_trace_validation(std::string image);
 void test_focus_quality_validation(std::string image);
 void test_bright_quality_validation(std::string image);
 int main(int argc, char* argv[]) {
+    if (argc < 2) {
+        std::cout << "usage: ./unit_test.exe /path/to/image.jpg [/path/to/target.jpg]\n";
+        return -1;
+    }
     int index = -1;
     do {
         std::cout << "Function list: \n\t1. Base64 encoder and decoder."
@@ -35,6 +40,7 @@ int main(int argc, char* argv[]) {
                   << "\n\t7. Cut trace validation."
                   << "\n\t8. Calculate image focus quality."
                   << "\n\t9. Calculate image bright quality."
+                  << "\n\t10. Check if target image is unique."
                   << "\nWhich one you want to test: ";
         std::cin >> index;
     } while (0);
@@ -44,28 +50,31 @@ int main(int argc, char* argv[]) {
         test_base64_text();
         break;
     case 2:
-        test_base64_image_show("image.jpg");
+        test_base64_image_show(argv[1]);
         break;
     case 3:
-        test_base64_image_matcher("image.jpg", "target.jpg");
+        test_base64_image_matcher(argv[1], argv[2]);
         break;
     case 4:
-        test_base64_image_rotate_transform("rotate_test.jpg");
+        test_base64_image_rotate_transform(argv[1]);
         break;
     case 5:
-        test_image_pixel_size_measure("image.jpg", "target.jpg");
+        test_image_pixel_size_measure(argv[1], argv[2]);
         break;
     case 6:
-        test_cut_baseline_detection("image.jpg");
+        test_cut_baseline_detection(argv[1]);
         break;
     case 7:
-        test_cut_trace_validation("image.jpg");
+        test_cut_trace_validation(argv[1]);
         break;
     case 8:
-        test_focus_quality_validation("focus_good.jpg");
+        test_focus_quality_validation(argv[1]);
         break;
     case 9:
-        test_bright_quality_validation("image.jpg");
+        test_bright_quality_validation(argv[1]);
+        break;
+    case 10:
+        test_unique_target_image(argv[1], argv[2]);
         break;
     default:
         break;
@@ -135,6 +144,17 @@ void test_base64_image_matcher(std::string image, std::string target) {
     cv::imshow("Target Image", img);
     cv::waitKey(0);
     std::cout << "Quality: " << quality << " X: " << matched_x - original_x << " Y: " << matched_y - original_y;
+}
+
+void test_unique_target_image(std::string image, std::string target) {
+    Mat imgMat = imread(image);
+    Mat targetMat = imread(target);
+    int ret = IsUniqueTarget(imgMat, targetMat);
+    if (ret < 0) {
+        std::cout << "Invalid target image. Please re-select target image.\n";
+        return;
+    }
+    std::cout << "Found unique target image: " << std::endl;
 }
 
 void test_base64_image_rotate_transform(std::string image) {
