@@ -9,8 +9,7 @@ using namespace cv;
 using namespace std;
 extern "C" {
 __declspec(dllexport) int CutLineDetection(char* image, int imageSize, int& delta_x, int& delta_y) {
-    char msg[256] = "";
-    LOG(msg, "[INFO] Calling CutLineDetection()....\n");
+    LOG("[INFO] Calling CutLineDetection()....\n");
     delta_x = -1;
     delta_y = -1;
     std::string imageData = Base64Decoder(image, imageSize);
@@ -18,7 +17,7 @@ __declspec(dllexport) int CutLineDetection(char* image, int imageSize, int& delt
     cv::Mat imageMat = imdecode(decodedImage, cv::IMREAD_COLOR);
 
     if (!imageMat.data) {
-        LOG(msg, "[INFO] Error: Failed to load image data.\n");
+        LOG("[INFO] Error: Failed to load image data.\n");
         return -1;
     }
 
@@ -26,8 +25,8 @@ __declspec(dllexport) int CutLineDetection(char* image, int imageSize, int& delt
 
     delta_x = 123;
     delta_y = 222;
-    LOG(msg, "[INFO] Delta X: %d\tDelta Y: %d\n", delta_x, delta_y);
-    LOG(msg, "[INFO] Calling MatchTarget()....Done\n");
+    LOG("[INFO] Delta X: %d\tDelta Y: %d\n", delta_x, delta_y);
+    LOG("[INFO] Calling MatchTarget()....Done\n");
     return 0;
 }
 }

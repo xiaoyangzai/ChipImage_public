@@ -26,14 +26,7 @@ __declspec(dllexport) int MatchTargetMat(cv::Mat& imageMat, cv::Mat& targetMat) 
     auto quality = static_cast<int>(maxVal * 100);
 
     // Draw the box for the searched target image
-    cv::rectangle(imageMat,
-                  maxLoc,
-                  Point(matchedPosX + targetMat.cols, matchedPosY + targetMat.rows),
-                  Scalar(0, 255, 0),
-                  5);
     // showShow the offset of the location of matched target image and the matching quality
-    string text = "Q=" + to_string(quality);
-    putText(imageMat, text, Point(20, 80), FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 5);
     return quality;
 }
 // Template matcher
@@ -45,28 +38,28 @@ __declspec(dllexport) int MatchTarget(char* image,
                                       int originalPosY,
                                       int& matchedPosX,
                                       int& matchedPosY,
-                                      char** outputImage) {
+                                      char** outputImage,
+                                      uint16_t fontSize) {
     int quality = -1;
-    char msg[256] = "";
-    LOG(msg, "[INFO] Calling MatchTarget()....\n");
+    LOG("[INFO] Calling MatchTarget()....\n");
     auto begin = std::chrono::high_resolution_clock::now();
-    LOG(msg, "[INFO] Image length: %d\tTarget length: %d\n", imageSize, targetSize);
+    LOG("[INFO] Image length: %d\tTarget length: %d\n", imageSize, targetSize);
     matchedPosX = originalPosX;
     matchedPosY = originalPosY;
     std::string imageData = Base64Decoder(image, imageSize);
     std::vector<uchar> decodedImage(imageData.begin(), imageData.end());
     cv::Mat imageMat = imdecode(decodedImage, cv::IMREAD_COLOR);
-    LOG(msg, "[INFO] Image size: %d x %d\n", imageMat.rows, imageMat.cols);
+    LOG("[INFO] Image size: %d x %d\n", imageMat.rows, imageMat.cols);
     std::string targetData = Base64Decoder(target, targetSize);
     std::vector<uchar> decodedTarget(targetData.begin(), targetData.end());
     cv::Mat targetMat = imdecode(decodedTarget, cv::IMREAD_COLOR);
-    LOG(msg, "[INFO] Target size: %d x %d\n", targetMat.rows, targetMat.cols);
+    LOG("[INFO] Target size: %d x %d\n", targetMat.rows, targetMat.cols);
 
     if (IsUniqueTarget(imageMat, targetMat) < 0) {
         auto end = std::chrono::high_resolution_clock::now();
         auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
-        LOG(msg, "[INFO] Invalid target image\n");
-        LOG(msg, "[INFO] During time: %lldms\n", elapsed);
+        LOG("[INFO] Invalid target image\n");
+        LOG("[INFO] During time: %lldms\n", elapsed);
         return -1;
     }
 
@@ -91,13 +84,13 @@ __declspec(dllexport) int MatchTarget(char* image,
                   5);
 
     if (!outputImage) {
-        LOG(msg, "[INFO] offset : %d x %d\tQuality: %d\n", matchedPosX, matchedPosY, quality);
+        LOG("[INFO] offset : %d x %d\tQuality: %d\n", matchedPosX, matchedPosY, quality);
         return quality;
     }
     // showShow the offset of the location of matched target image and the matching quality
     string text = "X=" + to_string(matchedPosX - originalPosX) + " Y=" + to_string(matchedPosY - originalPosY) +
                   " Q=" + to_string(quality);
-    putText(imageMat, text, Point(20, 80), FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), 5);
+    putText(imageMat, text, Point(20, 80), FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), fontSize);
 
     // Encoded output image with Base64
     std::vector<uchar> buffer;
@@ -109,8 +102,7 @@ __declspec(dllexport) int MatchTarget(char* image,
         g_dynamicMem = (char*)malloc(MEM_MAX_SIZE * sizeof(char));
     }
     if (outputImageDate.size() >= MEM_MAX_SIZE) {
-        LOG(msg,
-            "[ERROR] Destation image buffer is not large enough. Maximum buffer size is %d and Current dumped "
+        LOG("[ERROR] Destation image buffer is not large enough. Maximum buffer size is %d and Current dumped "
             "image size is %d.\n",
             MEM_MAX_SIZE,
             outputImageDate.size());
@@ -123,17 +115,16 @@ __declspec(dllexport) int MatchTarget(char* image,
         *outputImage = g_dynamicMem;
     }
 
-    LOG(msg, "[INFO] Matched Position: %d x %d\tQuality: %d\n", matchedPosX, matchedPosY, quality);
-    LOG(msg, "[INFO] Calling MatchTarget()....Done\n");
+    LOG("[INFO] Matched Position: %d x %d\tQuality: %d\n", matchedPosX, matchedPosY, quality);
+    LOG("[INFO] Calling MatchTarget()....Done\n");
     return quality;
 }
 
 __declspec(dllexport) int IsUniqueTarget(cv::Mat& imageMat, cv::Mat& targetMat) {
-    char msg[256] = "";
-    LOG(msg, "[INFO] Calling IsTargetValid()...\n");
+    LOG("[INFO] Calling IsTargetValid()...\n");
     auto begin = std::chrono::high_resolution_clock::now();
-    LOG(msg, "[INFO] Image size: %d x %d\n", imageMat.rows, imageMat.cols);
-    LOG(msg, "[INFO] Target size: %d x %d\n", targetMat.rows, targetMat.cols);
+    LOG("[INFO] Image size: %d x %d\n", imageMat.rows, imageMat.cols);
+    LOG("[INFO] Target size: %d x %d\n", targetMat.rows, targetMat.cols);
 
     int MarginY = imageMat.cols / 2 - targetMat.cols / 2;
     int MarginX = imageMat.rows / 2 - targetMat.rows / 2;
@@ -146,23 +137,23 @@ __declspec(dllexport) int IsUniqueTarget(cv::Mat& imageMat, cv::Mat& targetMat) 
         candidateList.push_back(cv::Rect(0, 0, imageMat.cols / 2, imageMat.rows));
         candidateList.push_back(cv::Rect(imageMat.cols / 2, 0, imageMat.cols / 2, imageMat.rows));
     }
-    LOG(msg, "[INFO] Number of available sub-image area is : %llu\n", candidateList.size());
+    LOG("[INFO] Number of available sub-image area is : %llu\n", candidateList.size());
     for (auto&& roi : candidateList) {
         cv::Mat subImg = imageMat(roi);
         int quality = MatchTargetMat(subImg, targetMat);
-        LOG(msg, "[INFO] Matched quality in sub-image: %d\n", quality);
+        LOG("[INFO] Matched quality in sub-image: %d\n", quality);
         if (quality >= 90) {
             auto end = std::chrono::high_resolution_clock::now();
             auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
-            LOG(msg, "[INFO] Invalid target image found in sub-image, quality: %d\n", quality);
-            LOG(msg, "[INFO] During time: %lldms\n", elapsed);
+            LOG("[INFO] Invalid target image found in sub-image, quality: %d\n", quality);
+            LOG("[INFO] During time: %lldms\n", elapsed);
             return -1;
         }
     }
     auto end = std::chrono::high_resolution_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
-    LOG(msg, "[INFO] Found valid target image. During time: %lldms\n", elapsed);
-    LOG(msg, "[INFO] Calling IsTargetValid()...Done\n");
+    LOG("[INFO] Found valid target image. During time: %lldms\n", elapsed);
+    LOG("[INFO] Calling IsTargetValid()...Done\n");
     return 0;
 }
 }
