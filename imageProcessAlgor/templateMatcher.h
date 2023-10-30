@@ -29,6 +29,29 @@ __declspec(dllexport) int MatchTarget(char* image,
                                       char** outputImage,
                                       uint16_t fontSize = 5);
 
+/**
+ * @brief check and return the target image if it is unique withi the souce image.
+ * @param image 		source image data buffer encoded with Base64
+ * @param imageSize		buffer size
+ * @param targetWidth   buffer size
+ * @param targetHigh 	high of the selected target image
+ * @param offsetX       save the X location offset of matched target image
+ * @param offsetY       save the Y location offset of matched target image
+ * @param outputMatchedImage 	point to the output image buffer with matched infomation
+ * @param outputTargetImage 	point to the output image buffer saved the unique target image
+ * @param fontSize      the text font size. defult is 5
+ * @return matched quality if successful. otherwise return non zero if failed.
+ */
+__declspec(dllexport) int GetUniqueTarget(char* image,
+                                          int imageSize,
+                                          int targetWidth,
+                                          int targetHigh,
+                                          int& matechedPosX,
+                                          int& matchedPosY,
+                                          char** outputTargetImage,
+                                          char** outputMatchedImage,
+                                          uint16_t fontSize = 5);
+
 /***
  * @brief check if the provided target template image is valid.
  * @param imageMat 		source image data buffer encoded with cv::Mat

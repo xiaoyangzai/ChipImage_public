@@ -17,6 +17,7 @@ using namespace cv;
 void test_base64_text();
 void test_base64_image_show(std::string path);
 void test_base64_image_matcher(std::string image, std::string target);
+void test_base64_image_unique_target(std::string image);
 void test_unique_target_image(std::string image, std::string target);
 void test_base64_image_rotate_transform(std::string image);
 void test_image_pixel_size_measure(std::string image, std::string target);
@@ -40,7 +41,8 @@ int main(int argc, char* argv[]) {
                   << "\n\t7. Cut trace validation."
                   << "\n\t8. Calculate image focus quality."
                   << "\n\t9. Calculate image bright quality."
-                  << "\n\t10. Check if target image is unique."
+                  << "\n\t10. Check if target image is unique via selected target image."
+                  << "\n\t11. Check if target image is unique via size of selected targe timage."
                   << "\nWhich one you want to test: ";
         std::cin >> index;
     } while (0);
@@ -76,6 +78,9 @@ int main(int argc, char* argv[]) {
     case 10:
         test_unique_target_image(argv[1], argv[2]);
         break;
+    case 11:
+        test_base64_image_unique_target(argv[1]);
+        break;
     default:
         break;
     }
@@ -103,6 +108,43 @@ void test_base64_image_show(std::string path) {
     Mat decodedMat = imdecode(decodedImage, cv::IMREAD_COLOR);
     cv::imshow("image", decodedMat);
     cv::waitKey(0);
+}
+
+void test_base64_image_unique_target(std::string image) {
+    char* matchedImage = NULL;
+    char* targetImage = NULL;
+    Mat img = imread(image);
+    vector<uchar> data;
+    imencode(".jpg", img, data);
+    string encodedImg = Base64Encoder(reinterpret_cast<char*>(data.data()), data.size());
+    int offsetX = -1;
+    int offsetY = -1;
+    int wide = img.cols / 3;
+    int high = img.rows / 3;
+    auto quality =
+        GetUniqueTarget(&encodedImg[0], encodedImg.size(), wide, high, offsetX, offsetY, &targetImage, &matchedImage);
+
+    if (quality < 0) {
+        std::cout << "not unique target image.\n";
+        return;
+    }
+    if (matchedImage) {
+        string encodedImg(matchedImage);
+        string decodedData = Base64Decoder(&encodedImg[0], encodedImg.size());
+        vector<uchar> decodedImage(decodedData.begin(), decodedData.end());
+        Mat decodedMat = imdecode(decodedImage, cv::IMREAD_COLOR);
+        cv::imshow("Matched image", decodedMat);
+        cv::waitKey(0);
+    }
+    if (targetImage) {
+        string encodedImg(targetImage);
+        string decodedData = Base64Decoder(&encodedImg[0], encodedImg.size());
+        vector<uchar> decodedImage(decodedData.begin(), decodedData.end());
+        Mat decodedMat = imdecode(decodedImage, cv::IMREAD_COLOR);
+        cv::imshow("target image", decodedMat);
+        cv::waitKey(0);
+    }
+    std::cout << "Quality: " << quality << " offset X: " << offsetX << " offset Y: " << offsetY << std::endl;
 }
 
 void test_base64_image_matcher(std::string image, std::string target) {
