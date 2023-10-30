@@ -395,10 +395,10 @@ int BisectionSearch(int start,
         if (midQuality >= frontQuality && midQuality >= behindQuality)
             break;
         else if (midQuality < frontQuality) {
-            mid = mid - 1;
+            mid = mid - step;
             // return BisectionSearch(start, mid - 1, user_step, captureImage, startPosition, type);
         } else {
-            mid = mid + 1;
+            mid = mid + step;
             // return BisectionSearch(mid + 1, end, user_step, captureImage, startPosition, type);
         }
         {

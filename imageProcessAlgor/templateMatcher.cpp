@@ -176,14 +176,6 @@ __declspec(dllexport) int MatchTarget(char* image,
     cv::Mat targetMat = imdecode(decodedTarget, cv::IMREAD_COLOR);
     LOG("[INFO] Target size: %d x %d\n", targetMat.rows, targetMat.cols);
 
-    if (IsUniqueTarget(imageMat, targetMat) < 0) {
-        auto end = std::chrono::high_resolution_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
-        LOG("[INFO] Invalid target image\n");
-        LOG("[INFO] During time: %lldms\n", elapsed);
-        return -1;
-    }
-
     cv::Mat imageGray, targetGray;
     cv::cvtColor(imageMat, imageGray, cv::COLOR_BGR2GRAY);
     cv::cvtColor(targetMat, targetGray, cv::COLOR_BGR2GRAY);
