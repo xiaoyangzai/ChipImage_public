@@ -21,7 +21,7 @@ static std::mutex cancelMutex;
 extern "C" {
 
 __declspec(dllexport) void CancelAutoAdjust(QualityType type) {
-    std::lock_guard<std::mutex> lock(mutex);
+    std::lock_guard<std::mutex> lock(cancelMutex);
     LOG("[INFO] Canceling Auto adjustment....\n");
     if (type == QualityType::FOCUS)
         isCancelAutoFocus = true;
@@ -201,6 +201,7 @@ __declspec(dllexport) float QueryQuality(int position, CaptureImage captureImage
     std::vector<uchar> decodedImage(imageData.begin(), imageData.end());
     cv::Mat imageMat = imdecode(decodedImage, cv::IMREAD_COLOR);
     float quality = -1.0;
+    startSearch = std::chrono::high_resolution_clock::now();
     if (type == QualityType::FOCUS)
         quality = FocusQuality(imageMat);
     if (type == QualityType::BRIGHTNESS)
@@ -253,7 +254,12 @@ int RefocusSearch(int begin,
             while ((pos + direction * userStep) <= end &&
                    (currentQuality = QueryQuality(pos, captureImage, type)) <
                        QueryQuality(pos + direction * userStep, captureImage, type)) {
-                LOG("[INFO] Direction: %d\t Compare: %d -> %d\n", direction, pos, pos + direction * userStep);
+                bool isCancel = type == QualityType::FOCUS ? isCancelAutoFocus : isCancelAutoBright;
+                LOG("[INFO] Direction: %d\t Compare: %d -> %d. Is canceling: %d\n",
+                    direction,
+                    pos,
+                    pos + direction * userStep,
+                    isCancel);
                 if (refQuality >= 0 && currentQuality >= refQuality)
                     break;
                 pos += direction * userStep;
@@ -263,9 +269,13 @@ int RefocusSearch(int begin,
                 }
                 {
                     std::lock_guard<std::mutex> lock(cancelMutex);
-                    if (isCancelAutoFocus) {
+                    if (type == QualityType::FOCUS && isCancelAutoFocus) {
                         isCancelAutoFocus = false;
-                        LOG("[INFO] Cancel Execution\n");
+                        LOG("[INFO] Cancel Auto Adjust focus execution\n");
+                        return pos;
+                    } else if (type == QualityType::BRIGHTNESS && isCancelAutoBright) {
+                        isCancelAutoBright = false;
+                        LOG("[INFO] Cancel Auto Adjust light execution\n");
                         return pos;
                     }
                 }
@@ -275,7 +285,12 @@ int RefocusSearch(int begin,
             while ((pos + direction * userStep) >= begin &&
                    (currentQuality = QueryQuality(pos, captureImage, type)) <
                        QueryQuality(pos + direction * userStep, captureImage, type)) {
-                LOG("[INFO] Direction: %d\t Compare: %d -> %d\n", direction, pos, pos + direction * userStep);
+                bool isCancel = type == QualityType::FOCUS ? isCancelAutoFocus : isCancelAutoBright;
+                LOG("[INFO] Direction: %d\t Compare: %d -> %d. Is canceling: \n",
+                    direction,
+                    pos,
+                    pos + direction * userStep,
+                    isCancel);
                 if (refQuality >= 0 && currentQuality >= refQuality)
                     break;
                 pos += direction * userStep;
@@ -287,9 +302,13 @@ int RefocusSearch(int begin,
                 }
                 {
                     std::lock_guard<std::mutex> lock(cancelMutex);
-                    if (isCancelAutoFocus) {
+                    if (type == QualityType::FOCUS && isCancelAutoFocus) {
                         isCancelAutoFocus = false;
-                        LOG("[INFO] Cancel Execution\n");
+                        LOG("[INFO] Cancel Auto Adjust focus execution\n");
+                        return pos;
+                    } else if (type == QualityType::BRIGHTNESS && isCancelAutoBright) {
+                        isCancelAutoBright = false;
+                        LOG("[INFO] Cancel Auto Adjust light execution\n");
                         return pos;
                     }
                 }
@@ -361,7 +380,8 @@ int BisectionSearch(int start,
             LOG("[INFO] Execution Timeout\n");
             return -1;
         } else {
-            LOG("[INFO] During time of BisectionSearch: %ld ms\n", elapsed);
+            bool isCancel = type == QualityType::FOCUS ? isCancelAutoFocus : isCancelAutoBright;
+            LOG("[INFO] During time of BisectionSearch: %ld ms. Is canceling: %d\n", elapsed, isCancel);
         }
         midQuality = QueryQuality(mid, captureImage, type);
         if (refQuality >= 0 && midQuality >= refQuality) {
@@ -380,6 +400,18 @@ int BisectionSearch(int start,
         } else {
             mid = mid + 1;
             // return BisectionSearch(mid + 1, end, user_step, captureImage, startPosition, type);
+        }
+        {
+            std::lock_guard<std::mutex> lock(cancelMutex);
+            if (type == QualityType::FOCUS && isCancelAutoFocus) {
+                isCancelAutoFocus = false;
+                LOG("[INFO] Cancel Auto Adjust focus execution\n");
+                return mid;
+            } else if (type == QualityType::BRIGHTNESS && isCancelAutoBright) {
+                isCancelAutoBright = false;
+                LOG("[INFO] Cancel Auto Adjust light execution\n");
+                return mid;
+            }
         }
 
     } while (midQuality < frontQuality || midQuality < behindQuality);

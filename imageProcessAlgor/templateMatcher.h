@@ -37,8 +37,8 @@ __declspec(dllexport) int MatchTarget(char* image,
  * @param targetHigh 	high of the selected target image
  * @param offsetX       save the X location offset of matched target image
  * @param offsetY       save the Y location offset of matched target image
- * @param outputMatchedImage 	point to the output image buffer with matched infomation
  * @param outputTargetImage 	point to the output image buffer saved the unique target image
+ * @param outputMatchedImage 	point to the output image buffer with matched infomation
  * @param fontSize      the text font size. defult is 5
  * @return matched quality if successful. otherwise return non zero if failed.
  */
@@ -46,8 +46,8 @@ __declspec(dllexport) int GetUniqueTarget(char* image,
                                           int imageSize,
                                           int targetWidth,
                                           int targetHigh,
-                                          int& matechedPosX,
-                                          int& matchedPosY,
+                                          int& offsetX,
+                                          int& offsetY,
                                           char** outputTargetImage,
                                           char** outputMatchedImage,
                                           uint16_t fontSize = 5);
