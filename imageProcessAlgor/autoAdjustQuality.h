@@ -14,7 +14,7 @@ __declspec(dllexport) void CancelAutoAdjust(QualityType type = QualityType::FOCU
 __declspec(dllexport) void CancelAutoAdjustFocus() {
     return CancelAutoAdjust(QualityType::FOCUS);
 }
-__declspec(dllexport) void CancelAutoAdjustBright() {
+__declspec(dllexport) void CancelAutoAdjustLight() {
     return CancelAutoAdjust(QualityType::BRIGHTNESS);
 }
 
@@ -26,6 +26,14 @@ __declspec(dllexport) void CancelAutoAdjustBright() {
  * @return matched quality if successful. otherwise return non zero if failed.
  */
 __declspec(dllexport) float ImageQuality(char* image, int imageSize, QualityType type = QualityType::FOCUS);
+
+__declspec(dllexport) float ImageFocusQuality(char* image, int imageSize) {
+    return ImageQuality(image, imageSize, QualityType::FOCUS);
+}
+
+__declspec(dllexport) float ImageLightQuality(char* image, int imageSize) {
+    return ImageQuality(image, imageSize, QualityType::BRIGHTNESS);
+}
 
 /*
  * @brief calculate the optimal focus position where the image light quality is best
