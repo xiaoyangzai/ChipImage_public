@@ -85,7 +85,7 @@ __declspec(dllexport) int GetUniqueTarget(char* image,
             offsetY,
             quality);
         LOG("[INFO] During time: %lldms\n", elapsed);
-        return -1;
+        return -2;
     }
     LOG("[INFO] Valid target image. offset on X: %d\t offset on Y: %d and Quality is %d\n", offsetX, offsetY, quality);
     LOG("[INFO] Checking if the target image is unique.");
