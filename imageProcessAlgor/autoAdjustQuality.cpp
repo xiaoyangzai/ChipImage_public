@@ -239,7 +239,7 @@ __declspec(dllexport) float FocusQuality(cv::Mat& image) {
 __declspec(dllexport) float BrightQuality(cv::Mat& image) {
     float quality = -1.0;
     // TODO: calculate the image quality based with the current focus setting
-    quality = 255 - abs(StatBrightnessRMS(image) - 150);
+    quality = (255 - abs(StatBrightnessRMS(image) - 150)) / 255.0;
     LOG("[INFO] Image brightness quality: %.2f\n", quality);
     return quality;
 }

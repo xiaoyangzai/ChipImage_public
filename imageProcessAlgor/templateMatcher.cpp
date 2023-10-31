@@ -168,8 +168,8 @@ __declspec(dllexport) int MatchTargetCenter(char* image,
                                             int imageSize,
                                             char* target,
                                             int targetSize,
-                                            int& matchedPosX,
-                                            int& matchedPosY,
+                                            int& offsetX,
+                                            int& offsetY,
                                             char** outputImage,
                                             uint16_t fontSize) {
     int quality = -1;
@@ -186,10 +186,7 @@ __declspec(dllexport) int MatchTargetCenter(char* image,
     LOG("[INFO] Target size: %d x %d\n", targetMat.rows, targetMat.cols);
     int originalPosX = imageMat.cols / 2 - targetMat.cols / 2;
     int originalPosY = imageMat.rows / 2 - targetMat.cols / 2;
-    matchedPosX = -1;
-    matchedPosY = -1;
-    quality =
-        MatchTarget(imageMat, targetMat, originalPosX, originalPosY, matchedPosX, matchedPosY, outputImage, fontSize);
+    quality = MatchTarget(imageMat, targetMat, originalPosX, originalPosY, offsetX, offsetY, outputImage, fontSize);
     LOG("[INFO] Calling MatchTargetCenter()....Done\n");
     return quality;
 }
@@ -198,15 +195,15 @@ __declspec(dllexport) int MatchTarget(cv::Mat& imageMat,
                                       cv::Mat& targetMat,
                                       int originalPosX,
                                       int originalPosY,
-                                      int& matchedPosX,
-                                      int& matchedPosY,
+                                      int& offsetX,
+                                      int& offsetY,
                                       char** outputImage,
                                       uint16_t fontSize) {
     int quality = -1;
     LOG("[INFO] Calling MatchTarget()....\n");
     auto begin = std::chrono::high_resolution_clock::now();
-    matchedPosX = originalPosX;
-    matchedPosY = originalPosY;
+    offsetX = -1;
+    offsetY = -1;
     LOG("[INFO] Image size: %d x %d\n", imageMat.rows, imageMat.cols);
     LOG("[INFO] Target size: %d x %d\n", targetMat.rows, targetMat.cols);
 
@@ -219,23 +216,20 @@ __declspec(dllexport) int MatchTarget(cv::Mat& imageMat,
     double minVal, maxVal;
     cv::Point minLoc, maxLoc;
     cv::minMaxLoc(result, &minVal, &maxVal, &minLoc, &maxLoc, cv::Mat());
-    matchedPosX = maxLoc.x;
-    matchedPosY = maxLoc.y;
+    offsetX = maxLoc.x - originalPosX;
+    offsetY = maxLoc.y - originalPosY;
     quality = static_cast<int>(maxVal * 100);
 
     // Draw the box for the searched target image
-    cv::rectangle(imageMat,
-                  maxLoc,
-                  Point(matchedPosX + targetMat.cols, matchedPosY + targetMat.rows),
-                  Scalar(0, 255, 0),
-                  5);
+    cv::rectangle(imageMat, maxLoc, Point(maxLoc.x + targetMat.cols, maxLoc.y + targetMat.rows), Scalar(0, 255, 0), 5);
 
     if (!outputImage) {
-        LOG("[INFO] offset : %d x %d\tQuality: %d\n", matchedPosX, matchedPosY, quality);
+        LOG("[INFO] offset X: %d and offset Y: %d\n", offsetX, offsetY, quality);
+        LOG("[INFO] matched location: (%d , %d)\tQuality: %d\n", maxLoc.x, maxLoc.y, quality);
         return quality;
     }
     // showShow the offset of the location of matched target image and the matching quality
-    string text = "X=" + to_string(matchedPosX - originalPosX) + " Y=" + to_string(matchedPosY - originalPosY) +
+    string text = "X=" + to_string(maxLoc.x - originalPosX) + " Y=" + to_string(maxLoc.y - originalPosY) +
                   " Q=" + to_string(quality);
     putText(imageMat, text, Point(20, 80), FONT_HERSHEY_SIMPLEX, 2, Scalar(0, 255, 0), fontSize);
 
@@ -262,7 +256,7 @@ __declspec(dllexport) int MatchTarget(cv::Mat& imageMat,
         *outputImage = g_dynamicMem;
     }
 
-    LOG("[INFO] Matched Position: %d x %d\tQuality: %d\n", matchedPosX, matchedPosY, quality);
+    LOG("[INFO] Matched Position: %d x %d\tQuality: %d\n", maxLoc.x, maxLoc.y, quality);
     LOG("[INFO] Calling MatchTarget()....Done\n");
     return quality;
 }
