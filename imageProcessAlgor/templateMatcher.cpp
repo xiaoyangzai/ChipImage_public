@@ -163,10 +163,39 @@ __declspec(dllexport) int GetUniqueTarget(char* image,
 }
 
 // Template matcher
-__declspec(dllexport) int MatchTarget(char* image,
-                                      int imageSize,
-                                      char* target,
-                                      int targetSize,
+
+__declspec(dllexport) int MatchTargetCenter(char* image,
+                                            int imageSize,
+                                            char* target,
+                                            int targetSize,
+                                            int& matchedPosX,
+                                            int& matchedPosY,
+                                            char** outputImage,
+                                            uint16_t fontSize) {
+    int quality = -1;
+    LOG("[INFO] Calling MatchTargetCenter()....\n");
+    auto begin = std::chrono::high_resolution_clock::now();
+    LOG("[INFO] Image length: %d\tTarget length: %d\n", imageSize, targetSize);
+    std::string imageData = Base64Decoder(image, imageSize);
+    std::vector<uchar> decodedImage(imageData.begin(), imageData.end());
+    cv::Mat imageMat = imdecode(decodedImage, cv::IMREAD_COLOR);
+    LOG("[INFO] Image size: %d x %d\n", imageMat.rows, imageMat.cols);
+    std::string targetData = Base64Decoder(target, targetSize);
+    std::vector<uchar> decodedTarget(targetData.begin(), targetData.end());
+    cv::Mat targetMat = imdecode(decodedTarget, cv::IMREAD_COLOR);
+    LOG("[INFO] Target size: %d x %d\n", targetMat.rows, targetMat.cols);
+    int originalPosX = imageMat.cols / 2 - targetMat.cols / 2;
+    int originalPosY = imageMat.rows / 2 - targetMat.cols / 2;
+    matchedPosX = -1;
+    matchedPosY = -1;
+    quality =
+        MatchTarget(imageMat, targetMat, originalPosX, originalPosY, matchedPosX, matchedPosY, outputImage, fontSize);
+    LOG("[INFO] Calling MatchTargetCenter()....Done\n");
+    return quality;
+}
+
+__declspec(dllexport) int MatchTarget(cv::Mat& imageMat,
+                                      cv::Mat& targetMat,
                                       int originalPosX,
                                       int originalPosY,
                                       int& matchedPosX,
@@ -176,16 +205,9 @@ __declspec(dllexport) int MatchTarget(char* image,
     int quality = -1;
     LOG("[INFO] Calling MatchTarget()....\n");
     auto begin = std::chrono::high_resolution_clock::now();
-    LOG("[INFO] Image length: %d\tTarget length: %d\n", imageSize, targetSize);
     matchedPosX = originalPosX;
     matchedPosY = originalPosY;
-    std::string imageData = Base64Decoder(image, imageSize);
-    std::vector<uchar> decodedImage(imageData.begin(), imageData.end());
-    cv::Mat imageMat = imdecode(decodedImage, cv::IMREAD_COLOR);
     LOG("[INFO] Image size: %d x %d\n", imageMat.rows, imageMat.cols);
-    std::string targetData = Base64Decoder(target, targetSize);
-    std::vector<uchar> decodedTarget(targetData.begin(), targetData.end());
-    cv::Mat targetMat = imdecode(decodedTarget, cv::IMREAD_COLOR);
     LOG("[INFO] Target size: %d x %d\n", targetMat.rows, targetMat.cols);
 
     cv::Mat imageGray, targetGray;
