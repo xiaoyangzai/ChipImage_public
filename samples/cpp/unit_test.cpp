@@ -41,8 +41,8 @@ int main(int argc, char* argv[]) {
                   << "\n\t7. Cut trace validation."
                   << "\n\t8. Calculate image focus quality."
                   << "\n\t9. Calculate image bright quality."
-                  << "\n\t10. Check if target image is unique via selected target image."
-                  << "\n\t11. Check if target image is unique via size of selected targe timage."
+                  << "\n\t10. Check if target image is unique via providing selected target image."
+                  << "\n\t11. Check if target image is unique via providing the size of targe timage."
                   << "\nWhich one you want to test: ";
         std::cin >> index;
     } while (0);
@@ -149,27 +149,12 @@ void test_base64_image_unique_target(std::string image) {
 
 void test_base64_image_matcher(std::string image, std::string target) {
     Mat img = imread(image);
-    vector<uchar> data;
-    imencode(".jpg", img, data);
-    string encodedImg = Base64Encoder(reinterpret_cast<char*>(data.data()), data.size());
-
-    data.clear();
     Mat targetMat = imread(target);
-    imencode(".jpg", targetMat, data);
-    string encodedTarget = Base64Encoder(reinterpret_cast<char*>(data.data()), data.size());
     int original_x = 700;
     int original_y = 450;
     int matched_x = 0;
     int matched_y = 0;
-    auto quality = MatchTarget(&encodedImg[0],
-                               encodedImg.size(),
-                               &encodedTarget[0],
-                               encodedTarget.size(),
-                               original_x,
-                               original_y,
-                               matched_x,
-                               matched_y,
-                               NULL);
+    auto quality = MatchTarget(img, targetMat, original_x, original_y, matched_x, matched_y, NULL);
     if (quality < 0) {
         std::cout << "Error happened during searhing the template image.\n";
         return;

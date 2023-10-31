@@ -18,6 +18,8 @@ __declspec(dllexport) void CancelAutoAdjustLight() {
     return CancelAutoAdjust(QualityType::BRIGHTNESS);
 }
 
+__declspec(dllexport) bool isCancelAutoAdjust(QualityType type);
+
 /**
  * @brief Search target from source image and return the location of the matched target image.
  * @param image 		source image data buffer encoded with Base64

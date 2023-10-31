@@ -30,6 +30,20 @@ __declspec(dllexport) void CancelAutoAdjust(QualityType type) {
     LOG("[INFO] Canceling Auto adjustment....Done\n");
 }
 
+__declspec(dllexport) bool isCancelAutoAdjust(QualityType type) {
+    std::lock_guard<std::mutex> lock(cancelMutex);
+    if (type == QualityType::FOCUS && isCancelAutoFocus) {
+        isCancelAutoFocus = false;
+        LOG("[INFO] Cancel Auto Adjust focus execution\n");
+        return true;
+    } else if (type == QualityType::BRIGHTNESS && isCancelAutoBright) {
+        isCancelAutoBright = false;
+        LOG("[INFO] Cancel Auto Adjust light execution\n");
+        return true;
+    }
+    return false;
+}
+
 __declspec(dllexport) float ImageQuality(char* image, int imageSize, QualityType type) {
     LOG("[INFO] Calling ImageQuality()....\n");
     float quality = -1.0;
@@ -269,18 +283,8 @@ int RefocusSearch(int begin,
                     LOG("[INFO] Execution Timeout\n");
                     return -1;
                 }
-                {
-                    std::lock_guard<std::mutex> lock(cancelMutex);
-                    if (type == QualityType::FOCUS && isCancelAutoFocus) {
-                        isCancelAutoFocus = false;
-                        LOG("[INFO] Cancel Auto Adjust focus execution\n");
-                        return -2;
-                    } else if (type == QualityType::BRIGHTNESS && isCancelAutoBright) {
-                        isCancelAutoBright = false;
-                        LOG("[INFO] Cancel Auto Adjust light execution\n");
-                        return -2;
-                    }
-                }
+                if (isCancelAutoAdjust(type))
+                    return -2;
                 LOG("[INFO] During Time: %lld ms\n", elapsed);
             }
         } else {
@@ -302,36 +306,18 @@ int RefocusSearch(int begin,
                 } else {
                     LOG("[INFO] During time of RefocusSearch: %ld ms\n", elapsed);
                 }
-                {
-                    std::lock_guard<std::mutex> lock(cancelMutex);
-                    if (type == QualityType::FOCUS && isCancelAutoFocus) {
-                        isCancelAutoFocus = false;
-                        LOG("[INFO] Cancel Auto Adjust focus execution\n");
-                        return -2;
-                    } else if (type == QualityType::BRIGHTNESS && isCancelAutoBright) {
-                        isCancelAutoBright = false;
-                        LOG("[INFO] Cancel Auto Adjust light execution\n");
-                        return -2;
-                    }
-                }
+                if (isCancelAutoAdjust(type))
+                    return -2;
                 LOG("[INFO] During Time: %lld ms\n", elapsed);
             }
         }
         LOG("[INFO] Current quality: %.2f\tRefer quality: %.2f\n", currentQuality, refQuality);
         if (refQuality >= 0 && currentQuality >= refQuality)
             break;
-        {
-            std::lock_guard<std::mutex> lock(cancelMutex);
-            if (type == QualityType::FOCUS && isCancelAutoFocus) {
-                isCancelAutoFocus = false;
-                LOG("[INFO] Cancel Auto Adjust focus execution\n");
-                return -2;
-            } else if (type == QualityType::BRIGHTNESS && isCancelAutoBright) {
-                isCancelAutoBright = false;
-                LOG("[INFO] Cancel Auto Adjust light execution\n");
-                return -2;
-            }
-        }
+
+        if (isCancelAutoAdjust(type))
+            return -2;
+
         if (pos == start) {
             LOG("[INFO] Change direction %d ->\n", direction);
             direction *= -1;
@@ -388,18 +374,8 @@ int BisectionSearch(int start,
     float behindQuality = -1;
     auto startSearch = std::chrono::high_resolution_clock::now();
     do {
-        {
-            std::lock_guard<std::mutex> lock(cancelMutex);
-            if (type == QualityType::FOCUS && isCancelAutoFocus) {
-                isCancelAutoFocus = false;
-                LOG("[INFO] Cancel Auto Adjust focus execution\n");
-                return -2;
-            } else if (type == QualityType::BRIGHTNESS && isCancelAutoBright) {
-                isCancelAutoBright = false;
-                LOG("[INFO] Cancel Auto Adjust light execution\n");
-                return -2;
-            }
-        }
+        if (isCancelAutoAdjust(type))
+            return -2;
         auto endSearch = std::chrono::high_resolution_clock::now();
         auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(endSearch - startSearch).count();
         if (timeout > 0 && elapsed > timeout) {
