@@ -65,15 +65,6 @@ __declspec(dllexport) int GetUniqueTarget(char* image,
     cv::Rect targetROI = cv::Rect(originalPosX, originalPosY, targetWidth, targetHigh);
     cv::Mat targetMat = imageMat(targetROI);
     LOG("[INFO] Target size: %d x %d\n", targetMat.rows, targetMat.cols);
-
-    if (IsUniqueTarget(imageMat, targetMat) < 0) {
-        auto end = std::chrono::high_resolution_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
-        LOG("[INFO] Invalid target image\n");
-        LOG("[INFO] During time: %lldms\n", elapsed);
-        return -1;
-    }
-
     cv::Mat imageGray, targetGray;
     cv::cvtColor(imageMat, imageGray, cv::COLOR_BGR2GRAY);
     cv::cvtColor(targetMat, targetGray, cv::COLOR_BGR2GRAY);
@@ -86,6 +77,52 @@ __declspec(dllexport) int GetUniqueTarget(char* image,
     offsetX = maxLoc.x - originalPosX;
     offsetY = maxLoc.y - originalPosY;
     quality = static_cast<int>(maxVal * 100);
+    if (quality < 98 || offsetX > 1 || offsetY > 1) {
+        auto end = std::chrono::high_resolution_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
+        LOG("[INFO] Invalid target image. offset on X: %d\t offset on Y: %d and Quality is %d\n",
+            offsetX,
+            offsetY,
+            quality);
+        LOG("[INFO] During time: %lldms\n", elapsed);
+        return -1;
+    }
+    LOG("[INFO] Valid target image. offset on X: %d\t offset on Y: %d and Quality is %d\n", offsetX, offsetY, quality);
+    LOG("[INFO] Checking if the target image is unique.");
+    if (IsUniqueTarget(imageMat, targetMat) < 0) {
+        auto end = std::chrono::high_resolution_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
+        LOG("[INFO] Not unique target image. Please re-select target area.\n");
+        LOG("[INFO] During time: %lldms\n", elapsed);
+        return -1;
+    }
+
+    LOG("[INFO] The target image is unique and will save the target image and source image with matched box.");
+    // save target image first
+    if (outputTargetImage) {
+        // Encoded output image with Base64
+        std::vector<uchar> buffer;
+        std::vector<int> params = {cv::IMWRITE_JPEG_QUALITY, 100};
+        cv::imencode(".jpg", targetMat, buffer, params);
+        char* ptr = reinterpret_cast<char*>(buffer.data());
+        std::string outputImageDate = Base64Encoder(ptr, buffer.size());
+        if (!g_dynamicTargetMem) {
+            g_dynamicTargetMem = (char*)malloc(MEM_MAX_SIZE * sizeof(char));
+        } else {
+            memset(g_dynamicTargetMem, 0, MEM_MAX_SIZE * sizeof(char));
+        }
+        if (outputImageDate.size() >= MEM_MAX_SIZE) {
+            LOG("[ERROR] Destation image buffer is not large enough. Maximum buffer size is %d and Current dumped "
+                "image size is %d.\n",
+                MEM_MAX_SIZE,
+                outputImageDate.size());
+            return -1;
+        }
+        // Save the output image into global memory with 15MB space
+        strcpy(g_dynamicTargetMem, outputImageDate.c_str());
+        *outputTargetImage = g_dynamicTargetMem;
+        LOG("[INFO] save target image\n");
+    }
 
     // Draw the box for the searched target image
     cv::rectangle(imageMat, maxLoc, Point(maxLoc.x + targetMat.cols, maxLoc.y + targetMat.rows), Scalar(0, 255, 0), 5);
@@ -117,31 +154,6 @@ __declspec(dllexport) int GetUniqueTarget(char* image,
         strcpy(g_dynamicMem, outputImageDate.c_str());
         *outputMatchedImage = g_dynamicMem;
         LOG("[INFO] save matched image\n");
-    }
-
-    if (outputTargetImage) {
-        // Encoded output image with Base64
-        std::vector<uchar> buffer;
-        std::vector<int> params = {cv::IMWRITE_JPEG_QUALITY, 100};
-        cv::imencode(".jpg", targetMat, buffer, params);
-        char* ptr = reinterpret_cast<char*>(buffer.data());
-        std::string outputImageDate = Base64Encoder(ptr, buffer.size());
-        if (!g_dynamicTargetMem) {
-            g_dynamicTargetMem = (char*)malloc(MEM_MAX_SIZE * sizeof(char));
-        } else {
-            memset(g_dynamicTargetMem, 0, MEM_MAX_SIZE * sizeof(char));
-        }
-        if (outputImageDate.size() >= MEM_MAX_SIZE) {
-            LOG("[ERROR] Destation image buffer is not large enough. Maximum buffer size is %d and Current dumped "
-                "image size is %d.\n",
-                MEM_MAX_SIZE,
-                outputImageDate.size());
-            return -1;
-        }
-        // Save the output image into global memory with 15MB space
-        strcpy(g_dynamicTargetMem, outputImageDate.c_str());
-        *outputTargetImage = g_dynamicTargetMem;
-        LOG("[INFO] save target image\n");
     }
 
     LOG("[INFO] Matched Position: %d x %d\tQuality: %d\n", maxLoc.x, maxLoc.y, quality);

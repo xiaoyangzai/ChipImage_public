@@ -228,7 +228,7 @@ void test_image_pixel_size_measure(std::string image, std::string target) {
 
     Mat targetMat = imread(target);
     vector<uchar> targetData;
-    imencode(".jpg", img, targetData);
+    imencode(".jpg", targetMat, targetData);
     string encodedTarget = Base64Encoder(reinterpret_cast<char*>(targetData.data()), targetData.size());
 
     int offsetOnX = 0;
